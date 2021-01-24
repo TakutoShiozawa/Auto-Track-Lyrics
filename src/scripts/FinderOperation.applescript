@@ -1,4 +1,4 @@
-property LyricsToArray: load script POSIX file "/Users/shiozawatakuto/Desktop/??/auto_scroll_lyrics/src/scripts/LyricsToArray.scpt"
+property LyricsToArray : load script POSIX file "/Users/shiozawatakuto/Desktop/??/auto_scroll_lyrics/src/scripts/LyricsToArray.scpt"
 
 on FindTimeTable(trackTitle, trackArtist)
   tell application "Finder"
@@ -19,6 +19,8 @@ on FindTimeTable(trackTitle, trackArtist)
           set textData to SetLyricsToArray(textData)
         end tell
       end if
+    else
+      return "???????????????"
     end if
     return textData
   end tell

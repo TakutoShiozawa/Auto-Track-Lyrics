@@ -10,7 +10,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
     },
-    width: 300,
+    width: 600,
     height: 600,
   });
 

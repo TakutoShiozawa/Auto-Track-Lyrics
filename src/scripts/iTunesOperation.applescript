@@ -1,3 +1,5 @@
+property LyricsToArray: load script POSIX file "/Users/shiozawatakuto/Desktop/開発/auto_scroll_lyrics/src/scripts/LyricsToArray.scpt"
+
 on IsRunning()
 	tell application "System Events"
 		set iTunesIsRunning to exists (processes where name is "iTunes")
@@ -24,8 +26,11 @@ on GetCurrentTrack()
       end if
       set trackTitle to (name of current track)
       set trackArtist to (artist of current track)
-      set trackLyrics to (lyrics of current track)
-      return "{\"name\":\"" & trackTitle & "\",\"artist\":\"" & trackArtist & "\"}"
+			set aLyrics to (lyrics of current track)
+      tell LyricsToArray
+        set trackLyrics to SetLyricsToArray(aLyrics)
+      end tell
+      return "{\"title\":\"" & trackTitle & "\",\"artist\":\"" & trackArtist & "\",\"lyrics\":" & trackLyrics & "}"
     end tell
   else
     return "曲を再生してください"

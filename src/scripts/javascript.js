@@ -1,12 +1,62 @@
 const execSync = require('child_process').execSync;
 const path =  require('path');
 
-function clickTest() {
-  const res = getPlayingPosition();
-  if (!res) return;
-  console.log(res);
-  // const timeTable = getTimeTable(res.title, res.artist);
-  // console.log(timeTable);
+const startEl = document.getElementById('start');
+const stopEl = document.getElementById('stop');
+const titleEl = document.getElementById('title');
+const artistEl = document.getElementById('artist');
+const positionEl = document.getElementById('position');
+const lyricsEl = document.getElementById('lyrics');
+
+//* 再生中の曲名・アーティスト名
+let nowTitle = '';
+let nowArtist = '';
+//* Interval処理をする変数。clearするために外部で設定
+let repeatGet;
+let repeatChange;
+let countingUp;
+//* 再生時間
+let playbackTime = 0;
+let nowPosition = 0;
+let countUpStart;
+//* タイムテーブルの時間表（配列）
+let timeArray = [];
+//* アラート表示させるフラグ
+let alertOn = true;
+
+function repeatGetPosition() {
+  repeatGet = setInterval(function() {
+    const res = getPlayingPosition();
+    countUpStart = new Date();
+    if (!res) return;
+
+    const { title, artist, position } = res;
+    //* 曲が変わった場合、フロントを書き換え
+    if (title !== nowTitle || artist !== nowArtist) {
+      alertOn = true;
+      console.log('change!');
+      setTrackInfo(title, artist);
+    }
+    nowPosition = position;
+  }, 2000);
+}
+
+function changeLyricsColor() {
+  repeatChange = setInterval(function() {
+    const liElements = lyricsEl.children;
+    for (let i = 0; i < liElements.length; i++) {
+      liElements[i].className = timeArray[i] < playbackTime ? 'red' : '';
+    }
+  }, 100);
+}
+
+function countUpTime() {
+  countingUp = setInterval(function() {
+    const nowTime = new Date();
+    const elapsedTime = ((nowTime.getTime() - countUpStart.getTime()) / 1000);
+    playbackTime = nowPosition + elapsedTime;
+    positionEl.textContent = '再生時間： ' + Math.floor(playbackTime);
+  }, 100);
 }
 
 /**
@@ -19,6 +69,17 @@ function getPlayingPosition() {
   const script = 'osascript ' + iTunesOperatePath + ' "playing"';
   const currentTrack = runAndDecode(script);
   return currentTrack;
+}
+
+/**
+ * タイムテーブルが存在しないときに再生中の歌詞を取得するメソッド
+ * @return {string[]} 歌詞の配列
+ */
+function getOriginalLyrics() {
+  const iTunesOperatePath = path.join(__dirname, 'scripts', 'iTunesOperation.scpt');
+  const script = 'osascript ' + iTunesOperatePath + ' "lyrics"';
+  const lyrics = runAndDecode(script);
+  return lyrics;
 }
 
 /**
@@ -56,7 +117,60 @@ function runAndDecode(script) {
     const json = JSON.parse(decode);
     return json;
   } catch (err) {
-    alert(decode);
-    throw new Error(err);
+    if (alertOn) {
+      alert(decode);
+    }
+    alertOn = false;
+    return '';
   }
 }
+
+/**
+ * 曲が更新された時にフロントの曲情報を書き換え
+ * @param {string} title 曲名
+ * @param {string} artist アーティスト名
+ */
+function setTrackInfo(title, artist) {
+  nowTitle = title;
+  nowArtist = artist;
+  titleEl.textContent = nowTitle;
+  artistEl.textContent = nowArtist;
+
+  const timeTable = getTimeTable(title, artist);
+  let lyrics;
+  if (timeTable) {
+    //* タイムテーブルが存在する時、色替え機能を開始
+    //* インターバル処理の多重起動を防止
+    clearInterval(repeatChange);
+    changeLyricsColor();
+    timeArray = timeTable.map(n => n.time);
+    lyrics = timeTable.map(n => n.lyrics);
+  } else {
+    //* タイムテーブルが存在しない時、色替え機能を停止
+    clearInterval(repeatChange);
+    timeArray = [];
+    lyrics = getOriginalLyrics();
+  }
+
+  let lyricsHtml = '';
+  lyrics.forEach((lyr) => {
+    lyricsHtml += `<li>${lyr}</li>`;
+  });
+  lyricsEl.innerHTML = lyricsHtml;
+}
+
+startEl.addEventListener('click', function() {
+  repeatGetPosition();
+  countUpStart = new Date();
+  countUpTime();
+  startEl.className = "display-none";
+  stopEl.className = "display";
+});
+
+stopEl.addEventListener('click', function() {
+  clearInterval(repeatGet);
+  clearInterval(repeatChange);
+  clearInterval(countingUp);
+  startEl.className = "display";
+  stopEl.className = "display-none";
+});

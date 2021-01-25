@@ -1,0 +1,49 @@
+
+// フロント
+body {
+  background-color: black;
+  color: whitesmoke;
+}
+
+.display {
+  display: block;
+  &-none {
+    display: none;
+  }
+}
+
+.track-info {
+  display: block;
+  text-align: center;
+  &__title {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  &__artist {
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  &__position {
+    color: rgb(168, 168, 168);
+  }
+  &__lyrics {
+    margin-bottom: 120px !important;
+    & li {
+      color:rgb(168, 168, 168);
+      min-height: 1rem;
+      &.red {
+        color: red;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+
+// reset css
+ul {
+  list-style:none;
+  list-style-type: none;
+  margin:0;
+  padding:0;
+}

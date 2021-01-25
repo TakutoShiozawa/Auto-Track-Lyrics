@@ -2,10 +2,36 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8">
-    <title>Electron Read us</title>
+    <title>Auto Scroll Lyrics</title>
+    <link rel="stylesheet" href="stylesheet/index.css">
   </head>
   <body>
-    <div onclick="clickTest()">Hello, electron!</div>
+    <button
+      id="start"
+      class="display"
+    >取得</button>
+    <button
+      id="stop"
+      class="display-none"
+    >止める</button>
+    <div class="track-info">
+      <div
+        id="title"
+        class="track-info__title"
+      ></div>
+      <div
+        id="artist"
+        class="track-info__artist"
+      ></div>
+      <div
+        id="position"
+        class="track-info__position"
+      ></div>
+      <ul
+        id="lyrics"
+        class="track-info__lyrics"
+      ></ul>
+    </div>
     <script type="text/javascript" src="scripts/javascript.js"></script>
   </body>
 </html>

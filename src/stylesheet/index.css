@@ -1,0 +1,53 @@
+body {
+  background-color: black;
+  color: whitesmoke;
+}
+
+.display {
+  display: block;
+}
+
+.display-none {
+  display: none;
+}
+
+.track-info {
+  display: block;
+  text-align: center;
+}
+
+.track-info__title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.track-info__artist {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.track-info__position {
+  color: #a8a8a8;
+}
+
+.track-info__lyrics {
+  margin-bottom: 120px !important;
+}
+
+.track-info__lyrics li {
+  color: #a8a8a8;
+  min-height: 1rem;
+}
+
+.track-info__lyrics li.red {
+  color: red;
+  font-weight: bold;
+}
+
+ul {
+  list-style: none;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+/*# sourceMappingURL=index.css.map */

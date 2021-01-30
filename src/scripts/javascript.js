@@ -139,7 +139,7 @@ function getTimeTable(title, artist) {
 function runAndDecode(script) {
   const response = execSync(script);
   const decode = new TextDecoder().decode(response);
-  if (!decode) return "";
+  if (!decode) return '';
   try {
     const json = JSON.parse(decode);
     return json;
@@ -184,6 +184,8 @@ function setTrackInfo(title, artist, time) {
     timeArray = [];
     lyrics = getOriginalLyrics();
   }
+  //* 自動スクロールの開始
+  isAuto = true;
   scrollTo(0, 0);
 
   let lyricsHtml = '';
@@ -212,8 +214,8 @@ startEl.addEventListener('click', () => {
   repeatGetPosition();
   countUpStart = new Date();
   countUpTime();
-  startEl.className = "display-none";
-  stopEl.className = "display";
+  startEl.className = 'display-none';
+  stopEl.className = 'display';
 });
 
 //* 停止ボタンクリック時
@@ -221,14 +223,17 @@ stopEl.addEventListener('click', () => {
   clearInterval(geterId);
   clearInterval(changerId);
   clearInterval(counterId);
-  startEl.className = "display";
-  stopEl.className = "display-none";
+  startEl.className = 'display';
+  stopEl.className = 'display-none';
 });
 
 //* ユーザーがスクロールした時、自動スクロールを停止
 document.addEventListener('wheel', () => {
-  isAuto = false;
-  autoEl.className = 'display';
+  //* タイムテーブルがない曲に対して実行しない
+  if (timeArray.length !== 0) {
+    isAuto = false;
+    autoEl.className = 'display';
+  }
 });
 
 //* AUTOボタンクリック時、自動スクロールの開始

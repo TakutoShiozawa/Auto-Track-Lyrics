@@ -27,16 +27,31 @@ $header-height: 120px;
 .track-info {
   display: block;
   text-align: center;
+  &__progress {
+    font-size: 0.8rem;
+    & progress[value],
+    & progress:not([value]) {
+      appearance: none;
+      margin: 0 8px 5px;
+      height: 6px;
+      width: 50%;
+      max-width: 300px;
+      &::-webkit-progress-bar {
+        background-color: #333;
+        border-radius: 3px;
+      }
+      &::-webkit-progress-value {
+        background-color: #ccc;
+        border-radius: 3px;
+      }
+    }
+  }
   &__title {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
   }
   &__artist {
     font-size: 0.8rem;
-    font-weight: bold;
-  }
-  &__position {
-    color: rgb(168, 168, 168);
   }
 }
 
@@ -58,6 +73,9 @@ $header-height: 120px;
 body {
   margin: 0 !important;
   padding: 0 !important;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 ul {

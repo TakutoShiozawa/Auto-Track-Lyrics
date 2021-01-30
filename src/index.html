@@ -20,6 +20,14 @@
         class="display-none"
       >AUTO</button>
       <div class="track-info">
+        <div class="track-info__progress">
+          <span id="position"></span>
+          <progress
+            id="progress"
+            max="100"
+          ></progress>
+          <span id="time"></span>
+        </div>
         <div
           id="title"
           class="track-info__title"
@@ -27,10 +35,6 @@
         <div
           id="artist"
           class="track-info__artist"
-        ></div>
-        <div
-          id="position"
-          class="track-info__position"
         ></div>
       </div>
     </div>

@@ -26,8 +26,9 @@ on GetPlayingPosition()
       end if
       set trackTitle to (name of current track)
       set trackArtist to (artist of current track)
+      set trackTime to (time of current track)
       set trackPosition to (player position as real)
-      return "{\"title\":\"" & trackTitle & "\",\"artist\":\"" & trackArtist & "\",\"position\":" & trackPosition & "}"
+      return "{\"title\":\"" & trackTitle & "\",\"artist\":\"" & trackArtist & "\",\"time\":\"" & trackTime & "\",\"position\":" & trackPosition & "}"
     end tell
   else
     return "曲を再生してください"

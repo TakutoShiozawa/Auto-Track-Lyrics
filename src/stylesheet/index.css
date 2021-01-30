@@ -24,18 +24,40 @@ body {
   text-align: center;
 }
 
+.track-info__progress {
+  font-size: 0.8rem;
+}
+
+.track-info__progress progress[value],
+.track-info__progress progress:not([value]) {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  margin: 0 8px 5px;
+  height: 6px;
+  width: 50%;
+  max-width: 300px;
+}
+
+.track-info__progress progress[value]::-webkit-progress-bar,
+.track-info__progress progress:not([value])::-webkit-progress-bar {
+  background-color: #333;
+  border-radius: 3px;
+}
+
+.track-info__progress progress[value]::-webkit-progress-value,
+.track-info__progress progress:not([value])::-webkit-progress-value {
+  background-color: #ccc;
+  border-radius: 3px;
+}
+
 .track-info__title {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: bold;
 }
 
 .track-info__artist {
   font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.track-info__position {
-  color: #a8a8a8;
 }
 
 .lyrics {
@@ -56,6 +78,10 @@ body {
 body {
   margin: 0 !important;
   padding: 0 !important;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 ul {

@@ -6,19 +6,24 @@ const stopEl = document.getElementById('stop');
 const autoEl = document.getElementById('auto');
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
+const timeEl = document.getElementById('time');
 const positionEl = document.getElementById('position');
+const progressEl = document.getElementById('progress');
 const lyricsEl = document.getElementById('lyrics');
 
-//* 再生中の曲名・アーティスト名
-let nowTitle = '';
-let nowArtist = '';
+//* 再生中の曲名・アーティスト名・再生時間
+let trackTitle = '';
+let trackArtist = '';
+let trackTime = 300;
 //* Interval処理をする変数。clearするために外部で設定
 let geterId;
 let changerId;
 let counterId;
 //* 再生時間
 let playbackTime = 0;
+//* iTunesから取得した再生時間
 let nowPosition = 0;
+//* 再生時刻の取得時刻
 let countUpStart;
 //* タイムテーブルの時間表（配列）
 let timeArray = [];
@@ -36,12 +41,11 @@ function repeatGetPosition() {
     const res = getPlayingPosition();
     if (!res) return;
 
-    const { title, artist, position } = res;
+    const { title, artist, time, position } = res;
     //* 曲が変わった場合、フロントを書き換え
-    if (title !== nowTitle || artist !== nowArtist) {
+    if (title !== trackTitle || artist !== trackArtist) {
       alertOn = true;
-      console.log('change!');
-      setTrackInfo(title, artist);
+      setTrackInfo(title, artist, time);
     }
 
     //* 取得する時間は正確に刻んでおらず、ブレてしまうので、
@@ -76,13 +80,15 @@ function countUpTime() {
     const nowTime = new Date();
     const elapsedTime = ((nowTime.getTime() - countUpStart.getTime()) / 1000);
     playbackTime = nowPosition + elapsedTime;
-    positionEl.textContent = '再生時間： ' + Math.floor(playbackTime);
+    //* プログレスバーを更新
+    progressEl.value = Math.floor(playbackTime / trackTime * 100);
+    positionEl.textContent = Math.floor(playbackTime / 60) + ':' + ('0' + Math.floor(playbackTime % 60)).slice(-2);
   }, 100);
 }
 
 /**
  * 再生中の曲情報（曲名、アーティスト名）と現在の再生時間を取得するメソッド
- * @return {{ title: string, artist: string, position: string }}
+ * @return {{ title: string, artist: string, time: string, position: number }}
  *   曲名, アーティスト名, 再生時間
  */
 function getPlayingPosition() {
@@ -150,12 +156,18 @@ function runAndDecode(script) {
  * 曲が更新された時にフロントの曲情報を書き換え
  * @param {string} title 曲名
  * @param {string} artist アーティスト名
+ * @param {string} time 再生時間
  */
-function setTrackInfo(title, artist) {
-  nowTitle = title;
-  nowArtist = artist;
-  titleEl.textContent = nowTitle;
-  artistEl.textContent = nowArtist;
+function setTrackInfo(title, artist, time) {
+  trackTitle = title;
+  trackArtist = artist;
+  //* 曲の再生時間を算出
+  const splitTime = time.split(':');
+  trackTime = Number(splitTime[0]) * 60 + Number(splitTime[1]);
+  //* 表示更新
+  titleEl.textContent = trackTitle;
+  artistEl.textContent = trackArtist;
+  timeEl.textContent = time;
 
   const timeTable = getTimeTable(title, artist);
   let lyrics;
@@ -185,6 +197,7 @@ function setTrackInfo(title, artist) {
 function scrollToLyrics() {
   //* 現在位置は「red」クラスの最後尾
   const redClassEls = document.getElementsByClassName('red');
+  if (redClassEls.length === 0) return;
   const jumpTo = redClassEls[redClassEls.length - 1];
   const clientRect = jumpTo.getBoundingClientRect();
   const top = window.pageYOffset + clientRect.top - 300;

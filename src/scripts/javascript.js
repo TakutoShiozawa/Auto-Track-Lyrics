@@ -37,13 +37,19 @@ function repeatGetPosition() {
       console.log('change!');
       setTrackInfo(title, artist);
     }
-    nowPosition = position;
+
+    //* 取得する時間は正確に刻んでおらず、ブレてしまうので、
+    //* 秒数が取得時間よりも大きく（2秒程度）ずれていたら変更。
+    if (Math.abs(nowPosition - position) > 2) {
+      nowPosition = position;
+    }
   }, 2000);
 }
 
 function changeLyricsColor() {
   repeatChange = setInterval(function() {
     const liElements = lyricsEl.children;
+    let count = 0;
     for (let i = 0; i < liElements.length; i++) {
       liElements[i].className = timeArray[i] < playbackTime ? 'red' : '';
     }

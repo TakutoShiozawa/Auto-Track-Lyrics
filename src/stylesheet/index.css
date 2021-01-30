@@ -3,8 +3,16 @@ body {
   color: whitesmoke;
 }
 
-.display {
+.header {
   display: block;
+  position: fixed;
+  width: 100%;
+  height: 120px;
+  background-color: black;
+}
+
+.display {
+  display: inline-block;
 }
 
 .display-none {
@@ -30,18 +38,24 @@ body {
   color: #a8a8a8;
 }
 
-.track-info__lyrics {
-  margin-bottom: 120px !important;
+.lyrics {
+  padding: 140px 12px 120px;
+  text-align: center;
 }
 
-.track-info__lyrics li {
+.lyrics li {
   color: #a8a8a8;
   min-height: 1rem;
 }
 
-.track-info__lyrics li.red {
+.lyrics li.red {
   color: red;
   font-weight: bold;
+}
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 ul {

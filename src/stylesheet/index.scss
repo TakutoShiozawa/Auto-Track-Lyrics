@@ -5,13 +5,25 @@ body {
   color: whitesmoke;
 }
 
-.display {
+// ヘッダー
+$header-height: 120px;
+.header {
   display: block;
+  position: fixed;
+  width: 100%;
+  height: $header-height;
+  background-color: black;
+}
+
+// ボタン表示・非表示
+.display {
+  display: inline-block;
   &-none {
     display: none;
   }
 }
 
+// 曲情報
 .track-info {
   display: block;
   text-align: center;
@@ -26,21 +38,28 @@ body {
   &__position {
     color: rgb(168, 168, 168);
   }
-  &__lyrics {
-    margin-bottom: 120px !important;
-    & li {
-      color:rgb(168, 168, 168);
-      min-height: 1rem;
-      &.red {
-        color: red;
-        font-weight: bold;
-      }
+}
+
+// 歌詞
+.lyrics {
+  padding: ($header-height + 20px) 12px 120px;
+  text-align: center;
+  & li {
+    color:rgb(168, 168, 168);
+    min-height: 1rem;
+    &.red {
+      color: red;
+      font-weight: bold;
     }
   }
 }
 
-
 // reset css
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 ul {
   list-style:none;
   list-style-type: none;

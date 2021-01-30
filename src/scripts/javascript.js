@@ -3,6 +3,7 @@ const path =  require('path');
 
 const startEl = document.getElementById('start');
 const stopEl = document.getElementById('stop');
+const autoEl = document.getElementById('auto');
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
 const positionEl = document.getElementById('position');
@@ -12,9 +13,9 @@ const lyricsEl = document.getElementById('lyrics');
 let nowTitle = '';
 let nowArtist = '';
 //* Interval処理をする変数。clearするために外部で設定
-let repeatGet;
-let repeatChange;
-let countingUp;
+let geterId;
+let changerId;
+let counterId;
 //* 再生時間
 let playbackTime = 0;
 let nowPosition = 0;
@@ -23,11 +24,16 @@ let countUpStart;
 let timeArray = [];
 //* アラート表示させるフラグ
 let alertOn = true;
+//* オートスクロールさせる?
+let isAuto = true;
 
+/**
+ * 定期的にiTunesから再生時間などの情報を取得する
+ *    曲が変更されたら新たに歌詞を取得する
+ */
 function repeatGetPosition() {
-  repeatGet = setInterval(function() {
+  geterId = setInterval(function() {
     const res = getPlayingPosition();
-    countUpStart = new Date();
     if (!res) return;
 
     const { title, artist, position } = res;
@@ -40,24 +46,33 @@ function repeatGetPosition() {
 
     //* 取得する時間は正確に刻んでおらず、ブレてしまうので、
     //* 秒数が取得時間よりも大きく（2秒程度）ずれていたら変更。
-    if (Math.abs(nowPosition - position) > 2) {
+    if (Math.abs(nowPosition - position) > 3) {
+      countUpStart = new Date();
       nowPosition = position;
     }
   }, 2000);
 }
 
+/** 再生箇所の歌詞を強調表示させる */
 function changeLyricsColor() {
-  repeatChange = setInterval(function() {
+  changerId = setInterval(function() {
     const liElements = lyricsEl.children;
-    let count = 0;
     for (let i = 0; i < liElements.length; i++) {
+      //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
       liElements[i].className = timeArray[i] < playbackTime ? 'red' : '';
+    }
+
+    //* 自動スクロールがONならば
+    if (isAuto) {
+      scrollToLyrics();
     }
   }, 100);
 }
 
+/** 連続して再生時間の更新させる */
 function countUpTime() {
-  countingUp = setInterval(function() {
+  counterId = setInterval(function() {
+    //* iTunesから再生位置を取得した時間からの経過時間で計算
     const nowTime = new Date();
     const elapsedTime = ((nowTime.getTime() - countUpStart.getTime()) / 1000);
     playbackTime = nowPosition + elapsedTime;
@@ -147,16 +162,17 @@ function setTrackInfo(title, artist) {
   if (timeTable) {
     //* タイムテーブルが存在する時、色替え機能を開始
     //* インターバル処理の多重起動を防止
-    clearInterval(repeatChange);
+    clearInterval(changerId);
     changeLyricsColor();
     timeArray = timeTable.map(n => n.time);
     lyrics = timeTable.map(n => n.lyrics);
   } else {
     //* タイムテーブルが存在しない時、色替え機能を停止
-    clearInterval(repeatChange);
+    clearInterval(changerId);
     timeArray = [];
     lyrics = getOriginalLyrics();
   }
+  scrollTo(0, 0);
 
   let lyricsHtml = '';
   lyrics.forEach((lyr) => {
@@ -165,7 +181,21 @@ function setTrackInfo(title, artist) {
   lyricsEl.innerHTML = lyricsHtml;
 }
 
-startEl.addEventListener('click', function() {
+/** 現在の歌詞の位置へスクロール */
+function scrollToLyrics() {
+  //* 現在位置は「red」クラスの最後尾
+  const redClassEls = document.getElementsByClassName('red');
+  const jumpTo = redClassEls[redClassEls.length - 1];
+  const clientRect = jumpTo.getBoundingClientRect();
+  const top = window.pageYOffset + clientRect.top - 300;
+  window.scroll({
+    top,
+    behavior: 'smooth',
+  });
+}
+
+//* 歌詞取得開始ボタンクリック時
+startEl.addEventListener('click', () => {
   repeatGetPosition();
   countUpStart = new Date();
   countUpTime();
@@ -173,10 +203,23 @@ startEl.addEventListener('click', function() {
   stopEl.className = "display";
 });
 
-stopEl.addEventListener('click', function() {
-  clearInterval(repeatGet);
-  clearInterval(repeatChange);
-  clearInterval(countingUp);
+//* 停止ボタンクリック時
+stopEl.addEventListener('click', () => {
+  clearInterval(geterId);
+  clearInterval(changerId);
+  clearInterval(counterId);
   startEl.className = "display";
   stopEl.className = "display-none";
+});
+
+//* ユーザーがスクロールした時、自動スクロールを停止
+document.addEventListener('wheel', () => {
+  isAuto = false;
+  autoEl.className = 'display';
+});
+
+//* AUTOボタンクリック時、自動スクロールの開始
+autoEl.addEventListener('click', () => {
+  isAuto = true;
+  autoEl.className = 'display-none';
 });

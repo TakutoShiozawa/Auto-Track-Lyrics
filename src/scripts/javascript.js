@@ -4,6 +4,7 @@ const path =  require('path');
 const startEl = document.getElementById('start');
 const stopEl = document.getElementById('stop');
 const autoEl = document.getElementById('auto');
+const colorEl = document.getElementById('color');
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
 const timeEl = document.getElementById('time');
@@ -31,6 +32,9 @@ let timeArray = [];
 let alertOn = true;
 //* オートスクロールさせる?
 let isAuto = true;
+//* フォントカラー
+let fontColor = 'red';
+const colorOption = ['red', 'blue', 'green', 'white'];
 
 /**
  * 定期的にiTunesから再生時間などの情報を取得する
@@ -63,7 +67,7 @@ function changeLyricsColor() {
     const liElements = lyricsEl.children;
     for (let i = 0; i < liElements.length; i++) {
       //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
-      liElements[i].className = timeArray[i] < playbackTime ? 'red' : '';
+      liElements[i].className = timeArray[i] < playbackTime ? `passed ${fontColor}` : '';
     }
 
     //* 自動スクロールがONならば
@@ -186,6 +190,7 @@ function setTrackInfo(title, artist, time) {
   }
   //* 自動スクロールの開始
   isAuto = true;
+  autoEl.className = 'display-none';
   scrollTo(0, 0);
 
   let lyricsHtml = '';
@@ -197,10 +202,10 @@ function setTrackInfo(title, artist, time) {
 
 /** 現在の歌詞の位置へスクロール */
 function scrollToLyrics() {
-  //* 現在位置は「red」クラスの最後尾
-  const redClassEls = document.getElementsByClassName('red');
-  if (redClassEls.length === 0) return;
-  const jumpTo = redClassEls[redClassEls.length - 1];
+  //* 現在位置は「passed」クラスの最後尾
+  const passedClassEls = document.getElementsByClassName('passed');
+  if (passedClassEls.length === 0) return;
+  const jumpTo = passedClassEls[passedClassEls.length - 1];
   const clientRect = jumpTo.getBoundingClientRect();
   const top = window.pageYOffset + clientRect.top - 300;
   window.scroll({
@@ -208,6 +213,18 @@ function scrollToLyrics() {
     behavior: 'smooth',
   });
 }
+
+//* 読み込み時にフォントカラーの選択オプションを追加
+window.onload = () => {
+  colorOption.forEach(color => {
+    const option = document.createElement('option');
+    option.value = color;
+    option.innerText = color;
+    option.selected = color === fontColor;
+
+    colorEl.appendChild(option);
+  });
+};
 
 //* 歌詞取得開始ボタンクリック時
 startEl.addEventListener('click', () => {
@@ -240,4 +257,10 @@ document.addEventListener('wheel', () => {
 autoEl.addEventListener('click', () => {
   isAuto = true;
   autoEl.className = 'display-none';
+});
+
+//* フォントカラー変更
+colorEl.addEventListener('change', (event) => {
+  const color = event.target.value;
+  fontColor = color;
 });

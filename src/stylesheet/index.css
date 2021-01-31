@@ -70,9 +70,24 @@ body {
   min-height: 1rem;
 }
 
-.lyrics li.red {
-  color: red;
+.lyrics li.passed {
   font-weight: bold;
+}
+
+.lyrics li.passed.red {
+  color: red;
+}
+
+.lyrics li.passed.blue {
+  color: cyan;
+}
+
+.lyrics li.passed.green {
+  color: greenyellow;
+}
+
+.lyrics li.passed.white {
+  color: white;
 }
 
 body {

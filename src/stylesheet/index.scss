@@ -62,9 +62,12 @@ $header-height: 120px;
   & li {
     color:rgb(168, 168, 168);
     min-height: 1rem;
-    &.red {
-      color: red;
+    &.passed {
       font-weight: bold;
+      &.red { color: red; }
+      &.blue { color: cyan; }
+      &.green { color: greenyellow }
+      &.white { color: white; }
     }
   }
 }

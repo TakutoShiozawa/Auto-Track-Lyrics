@@ -1,3 +1,4 @@
+@charset "UTF-8";
 body {
   background-color: black;
   color: whitesmoke;
@@ -61,7 +62,7 @@ body {
 }
 
 .lyrics {
-  padding: 140px 12px 120px;
+  padding: 120px 12px 120px;
   text-align: center;
 }
 
@@ -88,6 +89,14 @@ body {
 
 .lyrics li.passed.white {
   color: white;
+}
+
+.lyrics.registering li.passed + li:not(.passed) {
+  border-bottom: solid 1px white;
+}
+
+.lyrics.registering li.passed + li:not(.passed)::before {
+  content: "次→ ";
 }
 
 body {

@@ -40,7 +40,9 @@ on GetTrackLyrics()
 			set aLyrics to (lyrics of current track)
     end tell
 
-    set ScriptPath to parent of (path to me) as text
+    tell application "Finder"
+      set ScriptPath to parent of (path to me) as text
+    end tell
     set LyricsToArray to load script file (ScriptPath & "LyricsToArray.scpt")
     tell LyricsToArray
       set trackLyrics to SetLyricsToArray(aLyrics)
@@ -51,12 +53,21 @@ on GetTrackLyrics()
   end if
 end GetLyrics
 
+on RepositionToBeginning()
+  tell application "iTunes"
+    back track
+    play
+  end tell
+end RepositionToBeginning
+
 on run argv
   set command to item 1 of argv
   if command is "playing" then
     return GetPlayingPosition()
   else if command is "lyrics" then
     return GetTrackLyrics()
+  else if command is "back" then
+    return RepositionToBeginning()
   else
     return "{\"error\":\"Unsupported command\"}"
   end if

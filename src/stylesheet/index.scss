@@ -57,10 +57,10 @@ $header-height: 120px;
 
 // 歌詞
 .lyrics {
-  padding: ($header-height + 20px) 12px 120px;
+  padding: $header-height 12px 120px;
   text-align: center;
   & li {
-    color:rgb(168, 168, 168);
+    color:#a8a8a8;
     min-height: 1rem;
     &.passed {
       font-weight: bold;
@@ -68,6 +68,14 @@ $header-height: 120px;
       &.blue { color: cyan; }
       &.green { color: greenyellow }
       &.white { color: white; }
+    }
+  }
+  &.registering li.passed {
+    & + li:not(.passed) {
+      border-bottom: solid 1px white;
+      &::before {
+        content: "次→ ";
+      }
     }
   }
 }

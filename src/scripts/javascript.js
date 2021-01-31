@@ -4,6 +4,7 @@ const path =  require('path');
 const startEl = document.getElementById('start');
 const stopEl = document.getElementById('stop');
 const autoEl = document.getElementById('auto');
+const registerEl = document.getElementById('register');
 const colorEl = document.getElementById('color');
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
@@ -16,6 +17,7 @@ const lyricsEl = document.getElementById('lyrics');
 let trackTitle = '';
 let trackArtist = '';
 let trackTime = 300;
+let lyricsArray = [];
 //* Interval処理をする変数。clearするために外部で設定
 let geterId;
 let changerId;
@@ -28,6 +30,9 @@ let nowPosition = 0;
 let countUpStart;
 //* タイムテーブルの時間表（配列）
 let timeArray = [];
+let registeringArray = [];
+//* タイムテーブル登録中？
+let isRegistering = false;
 //* アラート表示させるフラグ
 let alertOn = true;
 //* オートスクロールさせる?
@@ -35,6 +40,56 @@ let isAuto = true;
 //* フォントカラー
 let fontColor = 'red';
 const colorOption = ['red', 'blue', 'green', 'white'];
+
+/**
+ * タイムテーブル登録でEnterを押すと時間が登録されるイベント
+ * @param {KeyboardEvent} event 
+ */
+const pressKeyEvent = function(event) {
+  switch (event.code) {
+    //* Enterボタン押下でタイムテーブルに追加
+    case 'Enter':
+      const time = Math.floor(playbackTime * 100) / 100;
+      registeringArray.push(time);
+      break;
+
+    //* 「←」「↑」ボタン押下で一つ戻す
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      registeringArray.pop();
+      break;
+
+    //* 再登録の場合「↓」「→」ボタン押下で元をコピー
+    case 'ArrowDown':
+    case 'ArrowRight':
+      if (timeArray.length) {
+        const i = registeringArray.length;
+        registeringArray.push(timeArray[i]);
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  //* 登録が終わったら確認して保存
+  if (registeringArray.length === lyricsArray.length) {
+    const res = confirm('タイムテーブルを登録しますか？');
+    if (res) {
+      //* タイムテーブルを保存
+      registerTimeTable();
+      //* 保存したら最初から再生
+      repositionToBeginning();
+      //* 登録したものをそのまま用いる
+      timeArray = [...registeringArray];
+    }
+
+    isRegistering = false;
+    //* タイムテーブル作成を停止
+    quitRegistering();
+  }
+}
+
 
 /**
  * 定期的にiTunesから再生時間などの情報を取得する
@@ -49,12 +104,19 @@ function repeatGetPosition() {
     //* 曲が変わった場合、フロントを書き換え
     if (title !== trackTitle || artist !== trackArtist) {
       alertOn = true;
+      countUpStart = new Date();
+      nowPosition = position;
       setTrackInfo(title, artist, time);
+      //* タイムテーブル登録中に曲が変わった場合登録中止
+      if (isRegistering) {
+        quitRegistering();
+      }
+      isRegistering = false;
     }
 
     //* 取得する時間は正確に刻んでおらず、ブレてしまうので、
-    //* 秒数が取得時間よりも大きく（2秒程度）ずれていたら変更。
-    if (Math.abs(nowPosition - position) > 3) {
+    //* 秒数が取得時間よりも大きく（0.75秒程度）ずれていたら変更。
+    if (Math.abs(playbackTime - position) > 0.75) {
       countUpStart = new Date();
       nowPosition = position;
     }
@@ -65,9 +127,10 @@ function repeatGetPosition() {
 function changeLyricsColor() {
   changerId = setInterval(function() {
     const liElements = lyricsEl.children;
+    const times = isRegistering ? registeringArray : timeArray;
     for (let i = 0; i < liElements.length; i++) {
       //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
-      liElements[i].className = timeArray[i] < playbackTime ? `passed ${fontColor}` : '';
+      liElements[i].className = times[i] && times[i] < playbackTime ? `passed ${fontColor}` : '';
     }
 
     //* 自動スクロールがONならば
@@ -113,19 +176,28 @@ function getOriginalLyrics() {
   return lyrics;
 }
 
+/** 曲を一番最初から始めるメソッド */
+function repositionToBeginning() {
+  const iTunesOperatePath = path.join(__dirname, 'scripts', 'iTunesOperation.scpt');
+  const script = 'osascript ' + iTunesOperatePath + ' "back"';
+  execSync(script);
+  //* 時間もリセット
+  playbackTime = 0;
+  nowPosition = 0;
+  countUpStart = new Date();
+}
+
 /**
  * 再生している曲のタイムテーブルを配列で取得するメソッド
- * @param {string} title 曲名
- * @param {string} artist アーティスト名
  * @return {{ time: number, lyrics: string }[]} 
  *   歌詞とその表示時刻の配列
  */
-function getTimeTable(title, artist) {
+function getTimeTable() {
   const findLyricsPath = path.join(__dirname, 'scripts', 'FinderOperation.scpt');
-  const script = `osascript ${findLyricsPath} "${title}" "${artist}"`;
+  const script = `osascript ${findLyricsPath} "get" "${trackTitle}" "${trackArtist}"`;
   const timeList = runAndDecode(script);
   if (!timeList) return;
-
+  
   const timeRegex = /\[?([0-9\.]+)\] /;
   const timeTable = timeList.filter(n => n !== '').map(text => {
     const time = Number(timeRegex.exec(text)[1]);
@@ -133,6 +205,29 @@ function getTimeTable(title, artist) {
     return { time, lyrics };
   });
   return timeTable;
+}
+
+/** タイムテーブルを作成するメソッド */
+function registerTimeTable() {
+  const findLyricsPath = path.join(__dirname, 'scripts', 'FinderOperation.scpt');
+  let script = `osascript ${findLyricsPath} "create" "${trackTitle}" "${trackArtist}"`;
+
+  //* シェルスクリプトの引数にタイムテーブルを追加していく
+  for (let i = 0; i < registeringArray.length; i++) {
+    script += ` "[${registeringArray[i]}] ${lyricsArray[i]}"`;
+  }
+
+  execSync(script);
+}
+
+/** タイムテーブル作成を中止するメソッド */
+function quitRegistering() {
+  //* 登録中止する
+  registerEl.textContent = timeArray.length ? '再登録' : '登録';
+  lyricsEl.classList.remove('registering');
+  //* Enterボタン押下でタイム記録するイベント削除
+  document.removeEventListener('keydown', pressKeyEvent);
+  registeringArray = [];
 }
 
 /**
@@ -173,20 +268,22 @@ function setTrackInfo(title, artist, time) {
   artistEl.textContent = trackArtist;
   timeEl.textContent = time;
 
-  const timeTable = getTimeTable(title, artist);
-  let lyrics;
+  const timeTable = getTimeTable();
   if (timeTable) {
     //* タイムテーブルが存在する時、色替え機能を開始
-    //* インターバル処理の多重起動を防止
+    //* インターバル処理多重起動の防止のため、再起動
     clearInterval(changerId);
     changeLyricsColor();
     timeArray = timeTable.map(n => n.time);
-    lyrics = timeTable.map(n => n.lyrics);
+    lyricsArray = timeTable.map(n => n.lyrics);
+    registerEl.textContent = '再登録';
   } else {
     //* タイムテーブルが存在しない時、色替え機能を停止
     clearInterval(changerId);
     timeArray = [];
-    lyrics = getOriginalLyrics();
+    //* iTunesから歌詞を取得。戻り値の配列が先頭空白なので消去
+    lyricsArray = getOriginalLyrics().slice(1);
+    registerEl.textContent = '登録';
   }
   //* 自動スクロールの開始
   isAuto = true;
@@ -194,7 +291,7 @@ function setTrackInfo(title, artist, time) {
   scrollTo(0, 0);
 
   let lyricsHtml = '';
-  lyrics.forEach((lyr) => {
+  lyricsArray.forEach((lyr) => {
     lyricsHtml += `<li>${lyr}</li>`;
   });
   lyricsEl.innerHTML = lyricsHtml;
@@ -215,8 +312,9 @@ function scrollToLyrics() {
   });
 }
 
-//* 読み込み時にフォントカラーの選択オプションを追加
+//* アプリ読み込み時に
 window.onload = () => {
+  //* フォントカラーの選択オプションを追加
   colorOption.forEach(color => {
     const option = document.createElement('option');
     option.value = color;
@@ -225,10 +323,25 @@ window.onload = () => {
 
     colorEl.appendChild(option);
   });
+
+  //* 十字キー入力でのスクロールを抑制
+  window.addEventListener('keydown', (event) => {
+    switch (event.code) {
+      case 'ArrowLeft':
+      case 'ArrowUp':
+      case 'ArrowRight':
+      case 'ArrowDown':
+        event.preventDefault()
+        break;
+      default:
+        break;
+    }
+  });
 };
 
 //* 歌詞取得開始ボタンクリック時
 startEl.addEventListener('click', () => {
+  startEl.blur();
   repeatGetPosition();
   countUpStart = new Date();
   countUpTime();
@@ -238,6 +351,7 @@ startEl.addEventListener('click', () => {
 
 //* 停止ボタンクリック時
 stopEl.addEventListener('click', () => {
+  stopEl.blur();
   clearInterval(geterId);
   clearInterval(changerId);
   clearInterval(counterId);
@@ -256,12 +370,35 @@ document.addEventListener('wheel', () => {
 
 //* AUTOボタンクリック時、自動スクロールの開始
 autoEl.addEventListener('click', () => {
+  autoEl.blur();
   isAuto = true;
   autoEl.className = 'display-none';
 });
 
+//* 「(再)登録」「登録中止」ボタンクリック時
+registerEl.addEventListener('click', () => {
+  registerEl.blur();
+  if (isRegistering) {
+    //* タイムテーブル登録を中止
+    quitRegistering();
+  } else {
+    //* タイムテーブルが存在する時、色替え機能を開始
+    //* インターバル処理多重起動の防止のため、再起動
+    clearInterval(changerId);
+    changeLyricsColor();
+    registerEl.textContent = '登録中止';
+    lyricsEl.classList.add('registering');
+    //* 曲を最初から再生し始める
+    repositionToBeginning();
+    //* Enterボタン押下でタイム記録するイベント追加
+    document.addEventListener('keydown', pressKeyEvent);
+  }
+  isRegistering = !isRegistering;
+});
+
 //* フォントカラー変更
 colorEl.addEventListener('change', (event) => {
+  colorEl.blur();
   const color = event.target.value;
   fontColor = color;
 });

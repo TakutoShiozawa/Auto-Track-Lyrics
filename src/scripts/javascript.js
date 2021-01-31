@@ -207,7 +207,8 @@ function scrollToLyrics() {
   if (passedClassEls.length === 0) return;
   const jumpTo = passedClassEls[passedClassEls.length - 1];
   const clientRect = jumpTo.getBoundingClientRect();
-  const top = window.pageYOffset + clientRect.top - 300;
+  const windowHeight = window.innerHeight;
+  const top = window.pageYOffset + clientRect.top - ((windowHeight + 100) / 2);
   window.scroll({
     top,
     behavior: 'smooth',

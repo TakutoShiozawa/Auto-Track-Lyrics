@@ -1,5 +1,3 @@
-property LyricsToArray : load script POSIX file "/Users/shiozawatakuto/Desktop/??/auto_scroll_lyrics/src/scripts/LyricsToArray.scpt"
-
 on FindTimeTable(trackTitle, trackArtist)
   tell application "Finder"
     set fileName to trackTitle & " - " & trackArtist & ".txt"
@@ -15,6 +13,8 @@ on FindTimeTable(trackTitle, trackArtist)
       end try
       close access file filePath
       if not (textData is equal to "") then
+        set ScriptPath to parent of (path to me) as text
+        set LyricsToArray to load script file (ScriptPath & "LyricsToArray.scpt")
         tell LyricsToArray
           set textData to SetLyricsToArray(textData)
         end tell

@@ -29,12 +29,15 @@
       ></select>
       <div class="track-info">
         <div class="track-info__progress">
-          <span id="position"></span>
-          <progress
+          <time id="position"></time>
+          <input
             id="progress"
+            type="range"
+            min="0"
             max="100"
-          ></progress>
-          <span id="time"></span>
+            step="1"
+          ></input>
+          <time id="time"></time>
         </div>
         <div
           id="title"

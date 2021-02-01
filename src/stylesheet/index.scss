@@ -28,21 +28,35 @@ $header-height: 120px;
   display: block;
   text-align: center;
   &__progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-size: 0.8rem;
-    & progress[value],
-    & progress:not([value]) {
+    & input[type="range"] {
       appearance: none;
-      margin: 0 8px 5px;
+      margin: 0 8px 2px;
       height: 6px;
       width: 50%;
       max-width: 300px;
-      &::-webkit-progress-bar {
-        background-color: #333;
-        border-radius: 3px;
-      }
-      &::-webkit-progress-value {
+      outline: none;
+      border-radius: 3px;
+      background-color: #333;
+      &::-webkit-slider-thumb {
+        appearance: none;
+        width: 3px;
+        height: 12px;
+        border-radius: 1.5px;
         background-color: #ccc;
-        border-radius: 3px;
+      }
+      &:hover {
+        margin: 0 8px 1px;
+        height: 8px;
+        border-radius: 4px;
+        &::-webkit-slider-thumb {
+          width: 4px;
+          height: 14px;
+          border-radius: 2px;
+        }
       }
     }
   }

@@ -20,7 +20,7 @@ let trackTime = 300;
 let lyricsArray = [];
 //* Interval処理をする変数。clearするために外部で設定
 let geterId;
-let changerId;
+let trackerId;
 let counterId;
 //* 再生時間
 let playbackTime = 0;
@@ -82,6 +82,7 @@ const pressKeyEvent = function(event) {
       repositionToBeginning();
       //* 登録したものをそのまま用いる
       timeArray = [...registeringArray];
+      scrollTo(0, 0);
     }
 
     isRegistering = false;
@@ -124,13 +125,19 @@ function repeatGetPosition() {
 }
 
 /** 再生箇所の歌詞を強調表示させる */
-function changeLyricsColor() {
-  changerId = setInterval(function() {
+function trackLyrics() {
+  trackerId = setInterval(function() {
     const liElements = lyricsEl.children;
+    const elRows = liElements.length;
     const times = isRegistering ? registeringArray : timeArray;
-    for (let i = 0; i < liElements.length; i++) {
-      //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
-      liElements[i].className = times[i] && times[i] < playbackTime ? `passed ${fontColor}` : '';
+    for (let i = 0; i < elRows; i++) {
+      if (times.length) {
+        //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
+        liElements[i].className = times[i] && times[i] < playbackTime ? `passed ${fontColor}` : '';
+      } else {
+        //* タイムテーブルがない場合、経過時間と曲の長さで大体のところまで
+        liElements[i].className = (i < (elRows * (playbackTime / trackTime))) ? 'passed' : '';
+      }
     }
 
     //* 自動スクロールがONならば
@@ -272,14 +279,10 @@ function setTrackInfo(title, artist, time) {
   if (timeTable) {
     //* タイムテーブルが存在する時、色替え機能を開始
     //* インターバル処理多重起動の防止のため、再起動
-    clearInterval(changerId);
-    changeLyricsColor();
     timeArray = timeTable.map(n => n.time);
     lyricsArray = timeTable.map(n => n.lyrics);
     registerEl.textContent = '再登録';
   } else {
-    //* タイムテーブルが存在しない時、色替え機能を停止
-    clearInterval(changerId);
     timeArray = [];
     //* iTunesから歌詞を取得。戻り値の配列が先頭空白なので消去
     lyricsArray = getOriginalLyrics().slice(1);
@@ -343,6 +346,7 @@ window.onload = () => {
 startEl.addEventListener('click', () => {
   startEl.blur();
   repeatGetPosition();
+  trackLyrics();
   countUpStart = new Date();
   countUpTime();
   startEl.className = 'display-none';
@@ -353,7 +357,7 @@ startEl.addEventListener('click', () => {
 stopEl.addEventListener('click', () => {
   stopEl.blur();
   clearInterval(geterId);
-  clearInterval(changerId);
+  clearInterval(trackerId);
   clearInterval(counterId);
   startEl.className = 'display';
   stopEl.className = 'display-none';
@@ -361,11 +365,8 @@ stopEl.addEventListener('click', () => {
 
 //* ユーザーがスクロールした時、自動スクロールを停止
 document.addEventListener('wheel', () => {
-  //* タイムテーブルがない曲に対して実行しない
-  if (timeArray.length !== 0) {
-    isAuto = false;
-    autoEl.className = 'display';
-  }
+  isAuto = false;
+  autoEl.className = 'display';
 });
 
 //* AUTOボタンクリック時、自動スクロールの開始
@@ -382,10 +383,6 @@ registerEl.addEventListener('click', () => {
     //* タイムテーブル登録を中止
     quitRegistering();
   } else {
-    //* タイムテーブルが存在する時、色替え機能を開始
-    //* インターバル処理多重起動の防止のため、再起動
-    clearInterval(changerId);
-    changeLyricsColor();
     registerEl.textContent = '登録中止';
     lyricsEl.classList.add('registering');
     //* 曲を最初から再生し始める

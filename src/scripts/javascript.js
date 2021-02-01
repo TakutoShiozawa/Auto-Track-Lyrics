@@ -90,7 +90,6 @@ const pressKeyEvent = function(event) {
   }
 }
 
-
 /**
  * 定期的にiTunesから再生時間などの情報を取得する
  *    曲が変更されたら新たに歌詞を取得する
@@ -148,7 +147,7 @@ function countUpTime() {
     const elapsedTime = ((nowTime.getTime() - countUpStart.getTime()) / 1000);
     playbackTime = nowPosition + elapsedTime;
     //* プログレスバーを更新
-    progressEl.value = Math.floor(playbackTime / trackTime * 100);
+    progressEl.value = Math.floor(playbackTime);
     positionEl.textContent = Math.floor(playbackTime / 60) + ':' + ('0' + Math.floor(playbackTime % 60)).slice(-2);
   }, 100);
 }
@@ -184,6 +183,15 @@ function repositionToBeginning() {
   //* 時間もリセット
   playbackTime = 0;
   nowPosition = 0;
+  countUpStart = new Date();
+}
+
+function jumpPlayPosition(position) {
+  const iTunesOperatePath = path.join(__dirname, 'scripts', 'iTunesOperation.scpt');
+  const script = 'osascript ' + iTunesOperatePath + ' "jump" ' + position;
+  execSync(script);
+  playbackTime = position;
+  nowPosition = position;
   countUpStart = new Date();
 }
 
@@ -263,6 +271,7 @@ function setTrackInfo(title, artist, time) {
   //* 曲の再生時間を算出
   const splitTime = time.split(':');
   trackTime = Number(splitTime[0]) * 60 + Number(splitTime[1]);
+  progressEl.max = trackTime;
   //* 表示更新
   titleEl.textContent = trackTitle;
   artistEl.textContent = trackArtist;
@@ -342,6 +351,9 @@ window.onload = () => {
 //* 歌詞取得開始ボタンクリック時
 startEl.addEventListener('click', () => {
   startEl.blur();
+  if (timeArray.length) {
+    changeLyricsColor();
+  }
   repeatGetPosition();
   countUpStart = new Date();
   countUpTime();
@@ -401,4 +413,23 @@ colorEl.addEventListener('change', (event) => {
   colorEl.blur();
   const color = event.target.value;
   fontColor = color;
+});
+
+//* プログレスバーを操作中
+progressEl.addEventListener('input', (event) => {
+  clearInterval(geterId);
+  clearInterval(changerId);
+  clearInterval(counterId);
+  const time = event.target.value;
+  positionEl.textContent = Math.floor(time / 60) + ':' + ('0' + Math.floor(time % 60)).slice(-2);
+});
+
+progressEl.addEventListener('change', (event) => {
+  if (timeArray.length) {
+    changeLyricsColor();
+  }
+  repeatGetPosition();
+  countUpStart = new Date();
+  countUpTime();
+  jumpPlayPosition(Number(event.target.value));
 });

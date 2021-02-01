@@ -26,30 +26,23 @@ body {
 }
 
 .track-info__progress {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
   font-size: 0.8rem;
 }
 
-.track-info__progress progress[value],
-.track-info__progress progress:not([value]) {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
-  margin: 0 8px 5px;
+.track-info__progress input[type="range"] {
+  margin: 0 8px 2px;
   height: 6px;
   width: 50%;
   max-width: 300px;
-}
-
-.track-info__progress progress[value]::-webkit-progress-bar,
-.track-info__progress progress:not([value])::-webkit-progress-bar {
-  background-color: #333;
-  border-radius: 3px;
-}
-
-.track-info__progress progress[value]::-webkit-progress-value,
-.track-info__progress progress:not([value])::-webkit-progress-value {
-  background-color: #ccc;
-  border-radius: 3px;
 }
 
 .track-info__title {

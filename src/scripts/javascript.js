@@ -417,19 +417,25 @@ colorEl.addEventListener('change', (event) => {
 
 //* プログレスバーを操作中
 progressEl.addEventListener('input', (event) => {
+  //* 機能を一時停止
   clearInterval(geterId);
   clearInterval(changerId);
   clearInterval(counterId);
+  //* プログレスバーの現在位置を更新
   const time = event.target.value;
   positionEl.textContent = Math.floor(time / 60) + ':' + ('0' + Math.floor(time % 60)).slice(-2);
 });
 
+//* プログレスバー操作終了時
 progressEl.addEventListener('change', (event) => {
-  if (timeArray.length) {
+  //* 停止していた機能の再起動
+  //* タイムテーブル登録時も歌詞色替え機能再開
+  if (timeArray.length || registeringArray.length) {
     changeLyricsColor();
   }
   repeatGetPosition();
   countUpStart = new Date();
   countUpTime();
+  //* 決定した再生時間にジャンプさせる
   jumpPlayPosition(Number(event.target.value));
 });

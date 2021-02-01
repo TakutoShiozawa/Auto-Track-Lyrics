@@ -39,10 +39,37 @@ body {
 }
 
 .track-info__progress input[type="range"] {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
   margin: 0 8px 2px;
   height: 6px;
   width: 50%;
   max-width: 300px;
+  outline: none;
+  border-radius: 3px;
+  background-color: #333;
+}
+
+.track-info__progress input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+          appearance: none;
+  width: 3px;
+  height: 12px;
+  border-radius: 1.5px;
+  background-color: #ccc;
+}
+
+.track-info__progress input[type="range"]:hover {
+  margin: 0 8px 1px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.track-info__progress input[type="range"]:hover::-webkit-slider-thumb {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
 }
 
 .track-info__title {

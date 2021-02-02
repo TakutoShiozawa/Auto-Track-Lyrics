@@ -60,6 +60,15 @@ on RepositionToBeginning()
   end tell
 end RepositionToBeginning
 
+on JumpPlayPosition(position)
+  if IsPlaying() then
+    set aPosition to (position as number)
+    tell application "iTunes"
+      set player position to aPosition
+    end tell
+  end if
+end JumpPlayPosition
+
 on run argv
   set command to item 1 of argv
   if command is "playing" then
@@ -68,6 +77,9 @@ on run argv
     return GetTrackLyrics()
   else if command is "back" then
     return RepositionToBeginning()
+  else if command is "jump" then
+    set position to item 2 of argv
+		JumpPlayPosition(position)
   else
     return "{\"error\":\"Unsupported command\"}"
   end if

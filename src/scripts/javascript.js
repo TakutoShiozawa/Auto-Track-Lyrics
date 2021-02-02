@@ -20,7 +20,7 @@ let trackTime = 300;
 let lyricsArray = [];
 //* Interval処理をする変数。clearするために外部で設定
 let geterId;
-let changerId;
+let trackerId;
 let counterId;
 //* 再生時間
 let playbackTime = 0;
@@ -82,6 +82,7 @@ const pressKeyEvent = function(event) {
       repositionToBeginning();
       //* 登録したものをそのまま用いる
       timeArray = [...registeringArray];
+      scrollTo(0, 0);
     }
 
     isRegistering = false;
@@ -89,7 +90,6 @@ const pressKeyEvent = function(event) {
     quitRegistering();
   }
 }
-
 
 /**
  * 定期的にiTunesから再生時間などの情報を取得する
@@ -124,13 +124,19 @@ function repeatGetPosition() {
 }
 
 /** 再生箇所の歌詞を強調表示させる */
-function changeLyricsColor() {
-  changerId = setInterval(function() {
+function trackLyrics() {
+  trackerId = setInterval(function() {
     const liElements = lyricsEl.children;
+    const elRows = liElements.length;
     const times = isRegistering ? registeringArray : timeArray;
-    for (let i = 0; i < liElements.length; i++) {
-      //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
-      liElements[i].className = times[i] && times[i] < playbackTime ? `passed ${fontColor}` : '';
+    for (let i = 0; i < elRows; i++) {
+      if (times.length) {
+        //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
+        liElements[i].className = times[i] && times[i] < playbackTime ? `passed ${fontColor}` : '';
+      } else {
+        //* タイムテーブルがない場合、経過時間と曲の長さで大体のところまで
+        liElements[i].className = (i < (elRows * (playbackTime / trackTime))) ? 'passed' : '';
+      }
     }
 
     //* 自動スクロールがONならば
@@ -148,7 +154,7 @@ function countUpTime() {
     const elapsedTime = ((nowTime.getTime() - countUpStart.getTime()) / 1000);
     playbackTime = nowPosition + elapsedTime;
     //* プログレスバーを更新
-    progressEl.value = Math.floor(playbackTime / trackTime * 100);
+    progressEl.value = Math.floor(playbackTime);
     positionEl.textContent = Math.floor(playbackTime / 60) + ':' + ('0' + Math.floor(playbackTime % 60)).slice(-2);
   }, 100);
 }
@@ -184,6 +190,15 @@ function repositionToBeginning() {
   //* 時間もリセット
   playbackTime = 0;
   nowPosition = 0;
+  countUpStart = new Date();
+}
+
+function jumpPlayPosition(position) {
+  const iTunesOperatePath = path.join(__dirname, 'scripts', 'iTunesOperation.scpt');
+  const script = 'osascript ' + iTunesOperatePath + ' "jump" ' + position;
+  execSync(script);
+  playbackTime = position;
+  nowPosition = position;
   countUpStart = new Date();
 }
 
@@ -263,6 +278,7 @@ function setTrackInfo(title, artist, time) {
   //* 曲の再生時間を算出
   const splitTime = time.split(':');
   trackTime = Number(splitTime[0]) * 60 + Number(splitTime[1]);
+  progressEl.max = trackTime;
   //* 表示更新
   titleEl.textContent = trackTitle;
   artistEl.textContent = trackArtist;
@@ -272,14 +288,10 @@ function setTrackInfo(title, artist, time) {
   if (timeTable) {
     //* タイムテーブルが存在する時、色替え機能を開始
     //* インターバル処理多重起動の防止のため、再起動
-    clearInterval(changerId);
-    changeLyricsColor();
     timeArray = timeTable.map(n => n.time);
     lyricsArray = timeTable.map(n => n.lyrics);
     registerEl.textContent = '再登録';
   } else {
-    //* タイムテーブルが存在しない時、色替え機能を停止
-    clearInterval(changerId);
     timeArray = [];
     //* iTunesから歌詞を取得。戻り値の配列が先頭空白なので消去
     lyricsArray = getOriginalLyrics().slice(1);
@@ -342,7 +354,11 @@ window.onload = () => {
 //* 歌詞取得開始ボタンクリック時
 startEl.addEventListener('click', () => {
   startEl.blur();
+  if (timeArray.length) {
+    changeLyricsColor();
+  }
   repeatGetPosition();
+  trackLyrics();
   countUpStart = new Date();
   countUpTime();
   startEl.className = 'display-none';
@@ -353,7 +369,7 @@ startEl.addEventListener('click', () => {
 stopEl.addEventListener('click', () => {
   stopEl.blur();
   clearInterval(geterId);
-  clearInterval(changerId);
+  clearInterval(trackerId);
   clearInterval(counterId);
   startEl.className = 'display';
   stopEl.className = 'display-none';
@@ -361,11 +377,8 @@ stopEl.addEventListener('click', () => {
 
 //* ユーザーがスクロールした時、自動スクロールを停止
 document.addEventListener('wheel', () => {
-  //* タイムテーブルがない曲に対して実行しない
-  if (timeArray.length !== 0) {
-    isAuto = false;
-    autoEl.className = 'display';
-  }
+  isAuto = false;
+  autoEl.className = 'display';
 });
 
 //* AUTOボタンクリック時、自動スクロールの開始
@@ -382,10 +395,6 @@ registerEl.addEventListener('click', () => {
     //* タイムテーブル登録を中止
     quitRegistering();
   } else {
-    //* タイムテーブルが存在する時、色替え機能を開始
-    //* インターバル処理多重起動の防止のため、再起動
-    clearInterval(changerId);
-    changeLyricsColor();
     registerEl.textContent = '登録中止';
     lyricsEl.classList.add('registering');
     //* 曲を最初から再生し始める
@@ -401,4 +410,29 @@ colorEl.addEventListener('change', (event) => {
   colorEl.blur();
   const color = event.target.value;
   fontColor = color;
+});
+
+//* プログレスバーを操作中
+progressEl.addEventListener('input', (event) => {
+  //* 機能を一時停止
+  clearInterval(geterId);
+  clearInterval(changerId);
+  clearInterval(counterId);
+  //* プログレスバーの現在位置を更新
+  const time = event.target.value;
+  positionEl.textContent = Math.floor(time / 60) + ':' + ('0' + Math.floor(time % 60)).slice(-2);
+});
+
+//* プログレスバー操作終了時
+progressEl.addEventListener('change', (event) => {
+  //* 停止していた機能の再起動
+  //* タイムテーブル登録時も歌詞色替え機能再開
+  if (timeArray.length || registeringArray.length) {
+    changeLyricsColor();
+  }
+  repeatGetPosition();
+  countUpStart = new Date();
+  countUpTime();
+  //* 決定した再生時間にジャンプさせる
+  jumpPlayPosition(Number(event.target.value));
 });

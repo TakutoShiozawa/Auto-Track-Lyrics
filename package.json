@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "npx electron src"
+    "run": "npx electron src",
+    "package": "npx electron-packager src AutoTrackingLyrics --platform=darwin --arch=x64 --overwrite"
   },
   "author": "",
   "license": "ISC",

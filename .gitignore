@@ -1,4 +1,6 @@
 node_modules/
 .DS_Store
 src/time_tables/
+src/db/
+src/node_modules/
 AutoTrackingLyrics-darwin-x64/

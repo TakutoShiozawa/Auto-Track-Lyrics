@@ -1,5 +1,27 @@
 const execSync = require('child_process').execSync;
 const path =  require('path');
+const NodeID3 = require('node-id3');
+const { AsyncNedb } = require('nedb-async');
+
+/** 曲クラス */
+class Song {
+  constructor(title, artist, album, trackNumber, path) {
+    this.title = title;
+    this.artist = artist;
+    this.album = album;
+    this.trackNumber = trackNumber && Number(trackNumber.split('/')[0]);
+    this.path = `${musicPath}${path}`;
+  }
+}
+
+/** プレイリストクラス */
+class Playlist {
+  songs = [];
+  constructor(name, songs) {
+    this.name = name;
+    this.songs = songs;
+  }
+}
 
 const startEl = document.getElementById('start');
 const stopEl = document.getElementById('stop');
@@ -12,6 +34,9 @@ const timeEl = document.getElementById('time');
 const positionEl = document.getElementById('position');
 const progressEl = document.getElementById('progress');
 const lyricsEl = document.getElementById('lyrics');
+const updateMusicEl = document.getElementById('update-music');
+const searchEl = document.getElementById('search-song');
+const keywordEl = document.getElementById('keyword');
 
 //* 再生中の曲名・アーティスト名・再生時間
 let trackTitle = '';
@@ -324,6 +349,80 @@ function scrollToLyrics() {
   });
 }
 
+/**
+ * iTunesの曲情報を更新するメソッド。Musicフォルダを選択し、InputEventで配列を取得
+ * @param {InputEvent} event InputEvent
+ */
+async function updateSongList(event) {
+  //* iTunesの曲が存在しているフォルダパス
+  const musicPath = '/Users/shiozawatakuto/Music/iTunes/iTunes Media/';
+  //* 曲情報データベースを取得
+  const db = new AsyncNedb({
+    filename: 'src/db/musics.db',
+    autoload: true,
+  });  
+  //* 返ってきた曲を配列で取得し、それぞれ処理
+  const f = event.target.files;
+  for (let i = 0; i < f.length; i++) {
+    //* オーディオファイルでない場合飛ばす
+    if (f[i].type.indexOf('audio') === -1) continue;
+
+    //* 相対パスの取得
+    const rPath = f[i].webkitRelativePath;
+    //* node-id3によって, mp3のID3タグ情報を取得
+    const { title, artist, album, trackNumber } = NodeID3.read(musicPath + rPath);
+    //* なぜかタイトルが取得できない曲があるため、ファイル名からタイトルを取得
+    const subTitle = rPath.split('/').pop().split('.')[0];
+    console.log(title || subTitle);
+    //* Songクラスを新規作成
+    const song = new Song(title || subTitle, artist, album, trackNumber, rPath);
+    //* 曲情報をUPSERTする
+    await db.asyncUpdate({ title, artist }, song, { upsert: true });
+  }  
+}
+
+/** 曲の検索（空白区切のAND検索、[曲名, アーティスト名, アルバム名]） */
+async function searchSongs() {
+  //* キーワードを空白で区切る
+  const words = keywordEl.value.split(/[ 　]/);
+  if (words.length === 0) return;
+
+  //* キーワードから曲を検索
+  //* 曲情報データベースを取得
+  const songDB = new AsyncNedb({
+    filename: 'src/db/musics.db',
+    autoload: true,
+  });
+
+  //* キーワード毎に正規表現（部分一致）化する
+  const regs = words.map(word => new RegExp(word));
+  //* 検索カラム
+  const songColumn = ['title', 'artist', 'album'];
+  //* 検索ワードに対してAND検索、カラムに対してOR検索
+  const andQuery = regs.map(regex => {
+    const orQuery = songColumn.map(col => ({ [col]: regex }));
+    return { $or: orQuery };
+  });
+
+  //* データベース内をクエリに従って検索・表示
+  const songs = await songDB.asyncFind({ $and: andQuery });
+  if (!songs.length) return;
+
+  const songIds = songs.map(song => song._id);
+  console.log(songIds);
+
+  //* 検索された曲を含むプレイリストを検索
+  //* プレイリストデータベースを取得
+  const playlistDB = new AsyncNedb({
+    filename: 'src/db/playlists.db',
+    autoload: true,
+  });
+
+  //* 曲IDを含むプレイリストを取得
+  const playlists = await playlistDB.asyncFind({ songs: { $elemMatch: { _id: { $in: songIds } } } });
+  console.log(playlists);
+}
+
 //* アプリ読み込み時に
 window.onload = () => {
   //* フォントカラーの選択オプションを追加
@@ -336,12 +435,10 @@ window.onload = () => {
     colorEl.appendChild(option);
   });
 
-  //* 十字キー入力でのスクロールを抑制
+  //* 上下キー入力でのスクロールを抑制
   window.addEventListener('keydown', (event) => {
     switch (event.code) {
-      case 'ArrowLeft':
       case 'ArrowUp':
-      case 'ArrowRight':
       case 'ArrowDown':
         event.preventDefault()
         break;
@@ -436,3 +533,9 @@ progressEl.addEventListener('change', (event) => {
   //* 決定した再生時間にジャンプさせる
   jumpPlayPosition(Number(event.target.value));
 });
+
+//* 曲情報をアップデート
+updateMusicEl.addEventListener('input', updateSongList);
+
+//* 曲の検索
+searchEl.addEventListener('click', searchSongs);

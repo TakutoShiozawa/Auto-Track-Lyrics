@@ -111,6 +111,10 @@ body {
   color: white;
 }
 
+.lyrics li.passed.none {
+  font-weight: normal;
+}
+
 .lyrics.registering li.passed + li:not(.passed) {
   border-bottom: solid 1px white;
 }

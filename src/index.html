@@ -8,14 +8,6 @@
   <body>
     <div class="header">
       <button
-        id="start"
-        class="display"
-      >取得</button>
-      <button
-        id="stop"
-        class="display-none"
-      >止める</button>
-      <button
         id="auto"
         class="display-none"
       >AUTO</button>
@@ -37,7 +29,7 @@
             max="100"
             step="1"
           ></input>
-          <time id="time"></time>
+          <time id="duration"></time>
         </div>
         <div
           id="title"
@@ -48,11 +40,18 @@
           class="track-info__artist"
         ></div>
       </div>
+      <button id="prev">前へ</button>
+      <button id="play">再生</button>
+      <button id="next">次へ</button>
     </div>
     <ul
       id="lyrics"
       class="lyrics"
     ></ul>
+    <audio
+      id="audio"
+      type="audio/mpeg"
+    ></audio>
     <input
       id="update-music"
       type="file"

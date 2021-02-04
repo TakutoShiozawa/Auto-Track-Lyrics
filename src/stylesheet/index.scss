@@ -82,6 +82,7 @@ $header-height: 120px;
       &.blue { color: cyan; }
       &.green { color: greenyellow }
       &.white { color: white; }
+      &.none { font-weight: normal; }
     }
   }
   &.registering li.passed {

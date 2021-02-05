@@ -10,46 +10,47 @@
     <div class="header">
       <div class="progress">
         <time id="position">--:--</time>
-        <input
-          id="progress"
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-        ></input>
+        <input id="progress" type="range" min="0" max="100" step="1" value="0" disabled>
         <time id="duration">--:--</time>
       </div>
       <div class="player">
         <div id="title" class="player__title"></div>
         <div id="artist" class="player__artist"></div>
         <div class="player__buttons">
-          <label class="record">
-            <input id="record" type="checkbox" disabled>
-            <span></span>
-          </label>
-          <div class="spacer"></div>
-          <button id="prev" disabled><i class="icon-control-rewind"></i></button>
-          <button id="play"><i class="icon-control-play"></i></button>
-          <button id="next" disabled><i class="icon-control-forward"></i></button>
-          <div class="spacer"></div>
-          <label class="color-select red">
-            Ａ
-            <select id="color"></select>
-          </label>
+          <div class="player__buttonsSmalls">
+            <label class="record">
+              <input id="record" type="checkbox" disabled>
+              <span></span>
+            </label>
+            <label class="record">
+              <input type="checkbox" disabled>
+              <span></span>
+            </label>
+          </div>
+          <div class="player__buttonsLarges">
+            <button id="prev" disabled><i class="icon-control-rewind"></i></button>
+            <button id="play"><i class="icon-control-play"></i></button>
+            <button id="next" disabled><i class="icon-control-forward"></i></button>
+          </div>
+          <div class="player__buttonsSmalls">
+            <label class="volume-control">
+              <i id="volume-icon" class="icon-volume-2"></i>
+              <div class="volume-control__window">
+                <input id="volume" type="range" min="0" max="1" step="0.02">
+              </div>
+            </label>
+            <label class="color-select red">
+              Ａ
+              <select id="color"></select>
+            </label>
+          </div>
         </div>
       </div>
     </div>
     <ul id="lyrics" class="lyrics"></ul>
-    <button id="auto" class="display-none">
-      <i class="icon-mouse"></i>
-    </button>
+    <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
     <audio id="audio" type="audio/mpeg"></audio>
-    <input
-      id="update-music"
-      type="file"
-      accept="audio/*"
-      webkitdirectory
-    >
+    <input id="update-music" type="file" accept="audio/*" webkitdirectory>
     <input id="keyword">
     <button id="search-song">検索</button>
     <script type="text/javascript" src="scripts/javascript.js"></script>

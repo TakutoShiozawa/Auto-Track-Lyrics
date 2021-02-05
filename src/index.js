@@ -20,6 +20,10 @@ function createWindow() {
     y: screenHeight - windowHeight,
     width: windowWidth,
     height: windowHeight,
+    minWidth: 360,
+    minHeight: 120,
+    maxWidth: 600,
+    maxHeight: screenHeight,
     alwaysOnTop: true,
   });
 

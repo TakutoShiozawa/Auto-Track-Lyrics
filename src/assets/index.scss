@@ -1,5 +1,6 @@
 //* 定数
 $header-height: 96px;
+$header-padding-x: 16px;
 $large-button-size: 60px;
 $small-button-size: 30px;
 $player-height: 48px;
@@ -58,15 +59,6 @@ body {
   color: whitesmoke;
 }
 
-// ヘッダー
-.header {
-  display: block;
-  position: fixed;
-  width: 100%;
-  height: $header-height;
-  background-color: black;
-}
-
 // ボタン表示・非表示
 .display {
   display: inline-block;
@@ -75,19 +67,29 @@ body {
   }
 }
 
+// ヘッダー
+.header {
+  display: block;
+  position: fixed;
+  width: calc(100% - #{$header-padding-x} * 2);
+  height: $header-height;
+  padding: 0 $header-padding-x;
+  background-color: black;
+}
+
 //* プログレスバー
 .progress {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
   margin: 8px 0;
   font-size: 0.8rem;
   & input[type="range"] {
     appearance: none;
     margin: 0 8px 2px;
     height: 6px;
-    width: 50%;
-    max-width: 300px;
+    width: 75%;
     outline: none;
     border-radius: 3px;
     background-color: #333;
@@ -133,13 +135,25 @@ body {
     height: $player-height;
     padding: 0 $player-padding-x;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     background-color: black;
     opacity: 0;
     @include hover-fade();
     &:hover {
       opacity: 1;
+    }
+    &Larges {
+      display: flex;
+      flex-wrap: nowrap;
+      width: $large-button-size * 3;
+      min-width: $large-button-size * 3;
+    }
+    &Smalls {
+      display: flex;
+      flex-wrap: nowrap;
+      width: $small-button-size * 2;
+      min-width: $small-button-size * 2;
     }
     & button {
       @include large-button();
@@ -183,6 +197,45 @@ body {
         content: "■";
       }
     }
+  }
+}
+
+//* ボリューム調整ボタン
+.volume-control {
+  @include small-button();
+  position: relative;
+  &__window {
+    position: absolute;
+    right: 0;
+    width: 160px;
+    height: 8px;
+    padding: 8px 0;
+    background-color: #2c2c2c;
+    border-radius: 12px;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .3s, visibility .3s;
+    & input[type="range"] {
+      appearance: none;
+      position: absolute;
+      right: 8px;
+      width: 140px;
+      height: 4px;
+      outline: none;
+      border-radius: 2px;
+      background-color: #000;
+      &::-webkit-slider-thumb {
+        appearance: none;
+        width: 3px;
+        height: 8px;
+        border-radius: 1.5px;
+        background-color: #ccc;
+      }
+    }
+  }
+  &:hover &__window {
+    visibility: visible;
+    opacity: 1;
   }
 }
 

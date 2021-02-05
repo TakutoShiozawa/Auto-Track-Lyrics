@@ -34,6 +34,8 @@ const progressEl = document.getElementById('progress');
 const prevEl = document.getElementById('prev');
 const playEl = document.getElementById('play');
 const nextEl = document.getElementById('next');
+const volumeEl = document.getElementById('volume');
+const volumeIconEl = document.getElementById('volume-icon');
 const audioEl = document.getElementById('audio');
 const lyricsEl = document.getElementById('lyrics');
 const updateMusicEl = document.getElementById('update-music');
@@ -66,11 +68,15 @@ const colorOption = ['red', 'blue', 'green', 'white'];
  * ウィンドウ読み込み時に登録するキーイベント
  * @param {KeyboardEvent} event 
  */
-function defaultKeyEvent(event) {
+async function defaultKeyEvent(event) {
   switch (event.code) {
     case 'ArrowUp':
+      event.preventDefault();
+      volumeUp();
+      break;
     case 'ArrowDown':
       event.preventDefault();
+      volumeDown();
       break;
     case 'ArrowLeft':
       event.preventDefault();
@@ -82,7 +88,7 @@ function defaultKeyEvent(event) {
       break;
     case 'Space':
       event.preventDefault();
-      togglePlay();
+      await togglePlay();
       break;
     default:
       break;
@@ -120,7 +126,7 @@ async function recordingKeyEvent(event) {
 
     case 'Space':
       event.preventDefault();
-      togglePlay();
+      await togglePlay();
       break;
   
     default:
@@ -140,9 +146,8 @@ async function recordingKeyEvent(event) {
       scrollTo(0, 0);
     }
 
-    recordEl.checked = false;
     //* タイムテーブル作成を停止
-    quitRecord();
+    recordEl.checked = false;
   }
 }
 
@@ -339,22 +344,23 @@ function convertTime(time) {
   return Math.floor(time / 60) + ':' + ('0' + Math.floor(time % 60)).slice(-2);
 }
 
-/** 再生状態をスイッチするメソッド */
-function togglePlay() {
-  //* 停止中の場合、「再生」
-  if (playerState === 'pause') {
-    audioEl.play();
-  }
-  //* 再生中の場合、「停止」
-  if (playerState === 'playing') {
-    audioEl.pause();
-  }
+/** ボリュームを上げる */
+function volumeUp() {
+  if (playerState === 'stop' || !playArray.length) return;
+  audioEl.volume = Math.min(audioEl.volume + 0.1, 1);
+}
+
+/** ボリュームを下げる */
+function volumeDown() {
+  if (playerState === 'stop' || !playArray.length) return;
+  audioEl.volume = Math.max(audioEl.volume - 0.1, 0);
 }
 
 /** 前曲へ */
 function backTrack() {
   if (playerState === 'stop' || !playArray.length) return;
-  if (audioEl.currentTime > 3) {
+  //* 再生時間が３秒以上経過していたら曲の最初へ
+  if (currentTime > 3) {
     audioEl.currentTime = 0;
     return;
   }
@@ -365,11 +371,39 @@ function backTrack() {
 /** 次曲へ */
 function nextTrack() {
   if (playerState === 'stop' || !playArray.length) return;
+  //* 再生リストの最後まで行ったら0から
   playingIndex =
     playArray.length === playingIndex + 1
       ? 0
       : playingIndex + 1;
   getAndSetTrackInfo();
+}
+
+/** 再生状態をスイッチするメソッド */
+async function togglePlay() {
+  //* 再生リストが空の時
+  if (!playArray.length) {
+    const songDB = new AsyncNedb({
+      filename: path.join(__dirname, 'db/songs.db'),
+      autoload: true,
+    });
+    //* 適当に曲を取ってきて再生リストに格納・再生
+    //TODO: 再生リストの取得方法を決定する
+    playArray = await songDB.asyncFind({ title: /[あいう]/ });
+    getAndSetTrackInfo();
+
+    prevEl.disabled = false;
+    nextEl.disabled = false;
+  }
+
+  //* 停止中の場合、「再生」
+  if (playerState === 'pause') {
+    audioEl.play();
+  }
+  //* 再生中の場合、「停止」
+  if (playerState === 'playing') {
+    audioEl.pause();
+  }
 }
 
 //* アプリ読み込み時に
@@ -383,6 +417,9 @@ window.onload = async () => {
 
     colorEl.appendChild(option);
   });
+
+  //* 初期音量設定
+  volumeEl.value = audioEl.volume;
 
   //* デフォルトのキーイベントを設定
   window.addEventListener('keydown', defaultKeyEvent);
@@ -450,22 +487,8 @@ searchEl.addEventListener('click', searchSongs);
 
 //* 再生/停止ボタンクリック
 playEl.addEventListener('click', async () => {
-  //* 再生リストが空の時
-  if (!playArray.length) {
-    const songDB = new AsyncNedb({
-      filename: path.join(__dirname, 'db/songs.db'),
-      autoload: true,
-    });
-    //* 適当に曲を取ってきて再生リストに格納・再生
-    playArray = await songDB.asyncFind({ title: /[abc]/ });
-    getAndSetTrackInfo();
-
-    prevEl.disabled = false;
-    nextEl.disabled = false;
-  }
-
   //* 再生状態トグル
-  togglePlay();
+  await togglePlay();
   playEl.blur();
 });
 
@@ -480,6 +503,14 @@ nextEl.addEventListener('click', () => {
   nextTrack();
   nextEl.blur();
 });
+
+//* 音量つまみの操作中の時
+volumeEl.addEventListener('input', (event) => {
+  audioEl.volume = event.target.value;
+});
+
+//* 音量つまみの操作終了時
+volumeEl.addEventListener('change', () => volumeEl.blur());
 
 //* 一時停止した時
 audioEl.addEventListener('pause', () => {
@@ -501,6 +532,7 @@ audioEl.addEventListener('loadeddata', () => {
   duration = audioEl.duration;
   durationEl.textContent = convertTime(duration);
   progressEl.max = Math.floor(duration);
+  progressEl.disabled = false;
 });
 
 //* 現在の再生位置が変更された時
@@ -509,4 +541,13 @@ audioEl.addEventListener('timeupdate', () => {
   progressEl.value = currentTime;
   positionEl.textContent = convertTime(currentTime);
   trackLyrics();
+});
+
+audioEl.addEventListener('volumechange', () => {
+  const volume = audioEl.volume;
+  volumeEl.value = volume;
+  volumeIconEl.className =
+    (volume > 0.5 && 'icon-volume-2') ||
+    (volume > 0 && 'icon-volume-1') ||
+    'icon-volume-off';
 });

@@ -1,3 +1,4 @@
+const path = require('path');
 const NodeID3 = require('node-id3');
 const { AsyncNedb } = require('nedb-async');
 
@@ -176,7 +177,7 @@ async function restoreTimeTable() {
 
   const { title, artist } = playArray[playingIndex];
   const songDB = new AsyncNedb({
-    filename: 'src/db/songs.db',
+    filename: path.join(__dirname, 'db/songs.db'),
     autoload: true,
   });
   await songDB.asyncUpdate({ title, artist }, { $set: { timeTable } }, { multi: true });
@@ -265,7 +266,7 @@ async function updateSongList(event) {
   const musicPath = '/Users/shiozawatakuto/Music/iTunes/iTunes Media/';
   //* 曲情報データベースを取得
   const db = new AsyncNedb({
-    filename: 'src/db/songs.db',
+    filename: path.join(__dirname, 'db/songs.db'),
     autoload: true,
   });  
   //* 返ってきた曲を配列で取得し、それぞれ処理
@@ -297,7 +298,7 @@ async function searchSongs() {
   //* キーワードから曲を検索
   //* 曲情報データベースを取得
   const songDB = new AsyncNedb({
-    filename: 'src/db/songs.db',
+    filename: path.join(__dirname, 'db/songs.db'),
     autoload: true,
   });
 
@@ -320,7 +321,7 @@ async function searchSongs() {
   //* 検索された曲を含むプレイリストを検索
   //* プレイリストデータベースを取得
   const playlistDB = new AsyncNedb({
-    filename: 'src/db/playlists.db',
+    filename: path.join(__dirname, 'db/playlists.db'),
     autoload: true,
   });
 
@@ -452,7 +453,7 @@ playEl.addEventListener('click', async () => {
   //* 再生リストが空の時
   if (!playArray.length) {
     const songDB = new AsyncNedb({
-      filename: 'src/db/songs.db',
+      filename: path.join(__dirname, 'db/songs.db'),
       autoload: true,
     });
     //* 適当に曲を取ってきて再生リストに格納・再生

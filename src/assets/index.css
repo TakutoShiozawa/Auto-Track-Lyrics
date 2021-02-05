@@ -1,0 +1,352 @@
+@charset "UTF-8";
+body {
+  background-color: black;
+  color: whitesmoke;
+}
+
+.header {
+  display: block;
+  position: fixed;
+  width: 100%;
+  height: 96px;
+  background-color: black;
+}
+
+.display {
+  display: inline-block;
+}
+
+.display-none {
+  display: none;
+}
+
+.progress {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  margin: 8px 0;
+  font-size: 0.8rem;
+}
+
+.progress input[type="range"] {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  margin: 0 8px 2px;
+  height: 6px;
+  width: 50%;
+  max-width: 300px;
+  outline: none;
+  border-radius: 3px;
+  background-color: #333;
+}
+
+.progress input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+          appearance: none;
+  width: 3px;
+  height: 12px;
+  border-radius: 1.5px;
+  background-color: #ccc;
+}
+
+.progress input[type="range"]:hover {
+  margin: 0 8px 1px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.progress input[type="range"]:hover::-webkit-slider-thumb {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+.player {
+  position: relative;
+  display: block;
+  height: 48px;
+  text-align: center;
+}
+
+.player__title {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.player__artist {
+  font-size: 0.8rem;
+}
+
+.player__buttons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - (8px * 2));
+  height: 48px;
+  padding: 0 8px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  background-color: black;
+  opacity: 0;
+  -webkit-transition: .5s;
+  transition: .5s;
+  -webkit-transition-delay: .5s;
+          transition-delay: .5s;
+}
+
+.player__buttons:hover {
+  -webkit-transition: 0s;
+  transition: 0s;
+  -webkit-transition-delay: 0s;
+          transition-delay: 0s;
+}
+
+.player__buttons:hover {
+  opacity: 1;
+}
+
+.player__buttons button {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: none;
+  font-size: 2rem;
+  border-radius: 50%;
+  background-color: transparent;
+  -webkit-transition: .3s;
+  transition: .3s;
+}
+
+.player__buttons button i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate3d(-50%, -50%, 0);
+          transform: translate3d(-50%, -50%, 0);
+  color: white;
+}
+
+.player__buttons button:disabled i {
+  color: #888;
+}
+
+.player__buttons button:disabled:hover {
+  background-color: transparent;
+}
+
+.player__buttons button:hover {
+  background-color: #2c2c2c;
+}
+
+.player__buttons .spacer {
+  display: inline-block;
+  width: 20px;
+  height: 10px;
+}
+
+.record {
+  position: relative;
+  padding: 0;
+  color: red;
+}
+
+.record input[type="checkbox"] {
+  position: absolute;
+  visibility: hidden;
+}
+
+.record input[type="checkbox"] ~ span {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 50%;
+  -webkit-transition: .3s;
+  transition: .3s;
+}
+
+.record input[type="checkbox"] ~ span:hover {
+  background-color: #2c2c2c;
+}
+
+.record input[type="checkbox"] ~ span::before {
+  content: "●";
+}
+
+.record input[type="checkbox"]:disabled ~ span {
+  opacity: 0.5;
+}
+
+.record input[type="checkbox"]:disabled ~ span:hover {
+  background-color: transparent;
+}
+
+.record input[type="checkbox"]:checked ~ span {
+  color: white;
+}
+
+.record input[type="checkbox"]:checked ~ span::before {
+  content: "■";
+}
+
+.color-select {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 50%;
+  -webkit-transition: .3s;
+  transition: .3s;
+  position: relative;
+}
+
+.color-select:hover {
+  background-color: #2c2c2c;
+}
+
+.color-select select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.color-select.red {
+  color: red;
+}
+
+.color-select.blue {
+  color: cyan;
+}
+
+.color-select.green {
+  color: greenyellow;
+}
+
+.color-select.white {
+  color: white;
+}
+
+#auto {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: none;
+  font-size: 2rem;
+  border-radius: 50%;
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background-color: #2c2c2c;
+  opacity: 0.4;
+  -webkit-transition: .5s;
+  transition: .5s;
+  -webkit-transition-delay: .5s;
+          transition-delay: .5s;
+}
+
+#auto i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate3d(-50%, -50%, 0);
+          transform: translate3d(-50%, -50%, 0);
+  color: white;
+}
+
+#auto:disabled i {
+  color: #888;
+}
+
+#auto:disabled:hover {
+  background-color: transparent;
+}
+
+#auto:hover {
+  -webkit-transition: 0s;
+  transition: 0s;
+  -webkit-transition-delay: 0s;
+          transition-delay: 0s;
+}
+
+#auto:hover {
+  opacity: 1;
+}
+
+.lyrics {
+  padding: 96px 20px 120px;
+  text-align: center;
+}
+
+.lyrics li {
+  color: #a8a8a8;
+  min-height: 1rem;
+}
+
+.lyrics li.passed {
+  font-weight: bold;
+}
+
+.lyrics li.passed.red {
+  color: red;
+}
+
+.lyrics li.passed.blue {
+  color: cyan;
+}
+
+.lyrics li.passed.green {
+  color: greenyellow;
+}
+
+.lyrics li.passed.white {
+  color: white;
+}
+
+.lyrics li.passed.none {
+  font-weight: normal;
+}
+
+.lyrics.recording li.passed + li:not(.passed) {
+  border-bottom: solid 1px white;
+}
+
+.lyrics.recording li.passed + li:not(.passed)::before {
+  content: "次→ ";
+}
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+ul {
+  list-style: none;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+/*# sourceMappingURL=index.css.map */

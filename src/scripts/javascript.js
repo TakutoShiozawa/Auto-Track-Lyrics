@@ -22,8 +22,9 @@ class Playlist {
 }
 
 const autoEl = document.getElementById('auto');
-const registerEl = document.getElementById('register');
+const recordEl = document.getElementById('record');
 const colorEl = document.getElementById('color');
+const colorSelectEl = document.getElementsByClassName('color-select')[0];
 const titleEl = document.getElementById('title');
 const artistEl = document.getElementById('artist');
 const durationEl = document.getElementById('duration');
@@ -53,9 +54,7 @@ let playerState = 'stop';
 //* タイムテーブルの時間表（配列）
 let timeArray = [];
 //* 登録中の時間表
-let registeringArray = [];
-//* タイムテーブル登録中？
-let isRegistering = false;
+let recordedArray = [];
 //* オートスクロールさせる？
 let isAuto = true;
 //* フォントカラー
@@ -93,19 +92,19 @@ function defaultKeyEvent(event) {
  * タイムテーブル登録時にEnterを押すと時間が登録されるイベント
  * @param {KeyboardEvent} event 
  */
-async function registeringKeyEvent(event) {
+async function recordingKeyEvent(event) {
   switch (event.code) {
     //* Enterボタン押下でタイムテーブルに追加
     case 'Enter':
       const time = Math.floor(currentTime * 100) / 100;
-      registeringArray.push(time);
+      recordedArray.push(time);
       break;
 
     //* 「←」「↑」ボタン押下で一つ戻す
     case 'ArrowLeft':
     case 'ArrowUp':
       event.preventDefault()
-      registeringArray.pop();
+      recordedArray.pop();
       break;
 
     //* 再登録の場合「↓」「→」ボタン押下で元をコピー
@@ -113,8 +112,8 @@ async function registeringKeyEvent(event) {
     case 'ArrowRight':
       event.preventDefault()
       if (timeArray.length) {
-        const i = registeringArray.length;
-        registeringArray.push(timeArray[i]);
+        const i = recordedArray.length;
+        recordedArray.push(timeArray[i]);
       }
       break;
 
@@ -128,21 +127,21 @@ async function registeringKeyEvent(event) {
   }
 
   //* 登録が終わったら確認して保存
-  if (registeringArray.length === lyricsArray.length) {
+  if (recordedArray.length === lyricsArray.length) {
     const res = confirm('タイムテーブルを登録しますか？');
     if (res) {
       //* タイムテーブルを保存
-      await registerTimeTable();
+      await restoreTimeTable();
       //* 保存したら最初から再生
       audioEl.currentTime = 0;
       //* 登録したものをそのまま用いる
-      timeArray = [...registeringArray];
+      timeArray = [...recordedArray];
       scrollTo(0, 0);
     }
 
-    isRegistering = false;
+    recordEl.checked = false;
     //* タイムテーブル作成を停止
-    quitRegistering();
+    quitRecord();
   }
 }
 
@@ -150,9 +149,9 @@ async function registeringKeyEvent(event) {
 function trackLyrics() {
   const liElements = lyricsEl.children;
   const elRows = liElements.length;
-  const times = isRegistering ? registeringArray : timeArray;
+  const times = recordEl.checked ? recordedArray : timeArray;
   for (let i = 0; i < elRows; i++) {
-    if (times.length || isRegistering) {
+    if (times.length || recordEl.checked) {
       //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
       liElements[i].className = times[i] && times[i] < currentTime ? `passed ${fontColor}` : '';
     } else {
@@ -168,10 +167,10 @@ function trackLyrics() {
 }
 
 /** タイムテーブルを作成するメソッド */
-async function registerTimeTable() {
+async function restoreTimeTable() {
   const timeTable = [];
-  for (let i = 0; i < registeringArray.length; i++) {
-    const content = `[${registeringArray[i]}] ${lyricsArray[i]}`;
+  for (let i = 0; i < recordedArray.length; i++) {
+    const content = `[${recordedArray[i]}] ${lyricsArray[i]}`;
     timeTable.push(content);
   }
 
@@ -184,13 +183,13 @@ async function registerTimeTable() {
 }
 
 /** タイムテーブル作成を中止するメソッド */
-function quitRegistering() {
-  //* 登録中止する
-  registerEl.textContent = timeArray.length ? '再登録' : '登録';
-  lyricsEl.classList.remove('registering');
+function quitRecord() {
+  lyricsEl.classList.remove('recording');
   //* Enterボタン押下でタイム記録するイベント削除
-  window.removeEventListener('keydown', registeringKeyEvent);
-  registeringArray = [];
+  window.removeEventListener('keydown', recordingKeyEvent);
+  //* デフォルトのキーイベントを復活
+  window.addEventListener('keydown', defaultKeyEvent);
+  recordedArray = [];
 }
 
 /** 曲が更新された時に歌詞（タイムテーブル）を取得 */
@@ -213,13 +212,12 @@ function getAndSetTrackInfo() {
     //* インターバル処理多重起動の防止のため、再起動
     timeArray = timetables.map(n => n.time);
     lyricsArray = timetables.map(n => n.lyrics);
-    registerEl.textContent = '再登録';
   } else {
     timeArray = [];
     //* ID3タグから歌詞を取得
     lyricsArray = getLyricsFromPath(path);
-    registerEl.textContent = '登録';
   }
+  recordEl.disabled = lyricsArray.length === 0;
   //* 自動スクロールの開始
   isAuto = true;
   autoEl.className = 'display-none';
@@ -232,6 +230,11 @@ function getAndSetTrackInfo() {
   lyricsEl.innerHTML = lyricsHtml;
 }
 
+/**
+ * 曲のパスからID3タグの歌詞を取得するメソッド
+ * @param {string} path 曲のファイルパス
+ * @return {string[]} 歌詞の配列
+ */
 function getLyricsFromPath(path) {
   const id3Tag = NodeID3.read(path);
   const lyrics = id3Tag.unsynchronisedLyrics && id3Tag.unsynchronisedLyrics.text;
@@ -398,28 +401,27 @@ autoEl.addEventListener('click', () => {
 });
 
 //* 「(再)登録」「登録中止」ボタンクリック時
-registerEl.addEventListener('click', () => {
-  registerEl.blur();
-  if (isRegistering) {
-    //* タイムテーブル登録を中止
-    quitRegistering();
-  } else {
-    registerEl.textContent = '登録中止';
-    lyricsEl.classList.add('registering');
+recordEl.addEventListener('change', (event) => {
+  recordEl.blur();
+  if (event.target.checked) {
+    lyricsEl.classList.add('recording');
     //* 曲を最初から再生し始める
     audioEl.currentTime = 0;
     //* デフォルトのキーイベントを削除
     window.removeEventListener('keydown', defaultKeyEvent);
     //* Enterボタン押下でタイム記録するイベント追加
-    window.addEventListener('keydown', registeringKeyEvent);
+    window.addEventListener('keydown', recordingKeyEvent);
+  } else {
+    //* タイムテーブル登録を中止
+    quitRecord();
   }
-  isRegistering = !isRegistering;
 });
 
 //* フォントカラー変更
 colorEl.addEventListener('change', (event) => {
   colorEl.blur();
   const color = event.target.value;
+  colorSelectEl.className = 'color-select ' + color;
   fontColor = color;
 });
 
@@ -456,6 +458,9 @@ playEl.addEventListener('click', async () => {
     //* 適当に曲を取ってきて再生リストに格納・再生
     playArray = await songDB.asyncFind({ title: /[abc]/ });
     getAndSetTrackInfo();
+
+    prevEl.disabled = false;
+    nextEl.disabled = false;
   }
 
   //* 再生状態トグル
@@ -478,13 +483,13 @@ nextEl.addEventListener('click', () => {
 //* 一時停止した時
 audioEl.addEventListener('pause', () => {
   playerState = 'pause';
-  playEl.textContent = '再生';
+  playEl.innerHTML = '<i class="icon-control-play"></i>';
 });
 
 //* 再生した時
 audioEl.addEventListener('play', () => {
   playerState = 'playing';
-  playEl.textContent = '停止';
+  playEl.innerHTML = '<i class="icon-control-pause"></i>';
 });
 
 //* 曲が最後まで行った時

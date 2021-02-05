@@ -3,55 +3,47 @@
   <head>
     <meta charset="utf-8">
     <title>Auto Tracking Lyrics</title>
-    <link rel="stylesheet" href="stylesheet/index.css">
+    <link rel="stylesheet" href="assets/index.css">
+    <link rel="stylesheet" href="assets/simple-line-icons/css/simple-line-icons.css">
   </head>
   <body>
     <div class="header">
-      <button
-        id="auto"
-        class="display-none"
-      >AUTO</button>
-      <button
-        id="register"
-        class="display"
-      >登録</button>
-      <select
-        id="color"
-        class=""
-      ></select>
-      <div class="track-info">
-        <div class="track-info__progress">
-          <time id="position"></time>
-          <input
-            id="progress"
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-          ></input>
-          <time id="duration"></time>
-        </div>
-        <div
-          id="title"
-          class="track-info__title"
-        ></div>
-        <div
-          id="artist"
-          class="track-info__artist"
-        ></div>
+      <div class="progress">
+        <time id="position">--:--</time>
+        <input
+          id="progress"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+        ></input>
+        <time id="duration">--:--</time>
       </div>
-      <button id="prev">前へ</button>
-      <button id="play">再生</button>
-      <button id="next">次へ</button>
+      <div class="player">
+        <div id="title" class="player__title"></div>
+        <div id="artist" class="player__artist"></div>
+        <div class="player__buttons">
+          <label class="record">
+            <input id="record" type="checkbox" disabled>
+            <span></span>
+          </label>
+          <div class="spacer"></div>
+          <button id="prev" disabled><i class="icon-control-rewind"></i></button>
+          <button id="play"><i class="icon-control-play"></i></button>
+          <button id="next" disabled><i class="icon-control-forward"></i></button>
+          <div class="spacer"></div>
+          <label class="color-select red">
+            Ａ
+            <select id="color"></select>
+          </label>
+        </div>
+      </div>
     </div>
-    <ul
-      id="lyrics"
-      class="lyrics"
-    ></ul>
-    <audio
-      id="audio"
-      type="audio/mpeg"
-    ></audio>
+    <ul id="lyrics" class="lyrics"></ul>
+    <button id="auto" class="display-none">
+      <i class="icon-mouse"></i>
+    </button>
+    <audio id="audio" type="audio/mpeg"></audio>
     <input
       id="update-music"
       type="file"

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Auto Tracking Lyrics</title>
     <link rel="stylesheet" href="assets/index.css">
+    <link rel="stylesheet" href="assets/snap.css">
     <link rel="stylesheet" href="assets/simple-line-icons/css/simple-line-icons.css">
   </head>
   <body>
@@ -15,7 +16,9 @@
         <time id="duration">--:--</time>
       </div>
       <div class="player">
-        <div id="title" class="player__title"></div>
+        <div class="player__title">
+          <div id="title"></div>
+        </div>
         <div id="artist" class="player__artist"></div>
         <div class="player__buttons">
           <div class="player__buttonsSmalls">
@@ -48,12 +51,21 @@
         </div>
       </div>
     </div>
-    <ul id="lyrics" class="lyrics"></ul>
-    <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
-    <audio id="audio" type="audio/mpeg"></audio>
-    <input id="update-music" type="file" accept="audio/*" webkitdirectory>
-    <input id="keyword">
-    <button id="search-song">検索</button>
+    <div id="snap" class="snap-content">
+      <ul id="lyrics" class="lyrics"></ul>
+      <audio id="audio" type="audio/mpeg"></audio>
+      <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
+    </div>
+    <div id="left-menu" class="snap-drawers left">
+      <input id="update-music" type="file" accept="audio/*" webkitdirectory>
+      <input id="keyword">
+      <button id="search-song">検索</button>
+    </div>
+    <div id="right-menu" class="snap-drawers right">
+      <button id="image-test">テスト</button>
+      <img id="image">
+    </div>
+    <script type="text/javascript" src="scripts/snap.js"></script>
     <script type="text/javascript" src="scripts/javascript.js"></script>
   </body>
 </html>

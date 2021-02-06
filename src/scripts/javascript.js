@@ -1,4 +1,4 @@
-const path = require('path');
+const Path = require('path');
 const NodeID3 = require('node-id3');
 const { AsyncNedb } = require('nedb-async');
 const Remote = require('electron').remote;
@@ -22,6 +22,18 @@ class Playlist {
     this.songs = songs;
   }
 }
+//! -----------------------------
+//! 再生したい曲の正規表現
+
+const searchOption = {
+  album: /(nightcore)/i,
+};
+//! -----------------------------
+
+//* ヘッダーの高さ, かつ, 最小ウィンドウサイズ
+const HEADER_HEIGHT = 96;
+//* ウィンドウの歌詞が見える最小の高さ
+const MINIMUM_SIZE_FOR_LYRICS = 160;
 
 const closeEl = document.getElementById('close');
 const positionEl = document.getElementById('position');
@@ -37,6 +49,7 @@ const volumeEl = document.getElementById('volume');
 const volumeIconEl = document.getElementById('volume-icon');
 const colorEl = document.getElementById('color');
 const colorSelectEl = document.getElementsByClassName('color-select')[0];
+const snapEl = document.getElementById('snap');
 const lyricsEl = document.getElementById('lyrics');
 const autoEl = document.getElementById('auto');
 const audioEl = document.getElementById('audio');
@@ -65,7 +78,8 @@ let isAuto = true;
 //* フォントカラー
 let fontColor = 'red';
 const colorOption = ['red', 'blue', 'green', 'white'];
-
+//* Snap.js操作用の変数, 初期設定
+let snapper = new Snap({ element: snapEl });
 /**
  * ウィンドウ読み込み時に登録するキーイベント
  * @param {KeyboardEvent} event 
@@ -145,10 +159,11 @@ async function recordingKeyEvent(event) {
       audioEl.currentTime = 0;
       //* 登録したものをそのまま用いる
       timeArray = [...recordedArray];
-      scrollTo(0, 0);
+      lyricsEl.scroll({ top: 0 });
     }
 
     //* タイムテーブル作成を停止
+    quitRecord();
     recordEl.checked = false;
   }
 }
@@ -184,7 +199,7 @@ async function restoreTimeTable() {
 
   const { title, artist } = playArray[playingIndex];
   const songDB = new AsyncNedb({
-    filename: path.join(__dirname, 'db/songs.db'),
+    filename: Path.join(__dirname, 'db/songs.db'),
     autoload: true,
   });
   await songDB.asyncUpdate({ title, artist }, { $set: { timeTable } }, { multi: true });
@@ -206,6 +221,8 @@ function getAndSetTrackInfo() {
   audioEl.src = path;
   audioEl.play();
 
+  const id3tag = NodeID3.read(path);
+  console.log(id3tag);
   titleEl.textContent = title;
   artistEl.textContent = artist;
   
@@ -229,7 +246,7 @@ function getAndSetTrackInfo() {
   //* 自動スクロールの開始
   isAuto = true;
   autoEl.className = 'display-none';
-  scrollTo(0, 0);
+  lyricsEl.scroll({ top: 0 });
 
   let lyricsHtml = '';
   lyricsArray.forEach((lyr) => {
@@ -249,6 +266,8 @@ function getLyricsFromPath(path) {
   return lyrics ? lyrics.split(/\r\n|\n|\r/) : [];
 }
 
+//* 誤差の補正
+const CORRECTION = 12;
 /** 現在の歌詞の位置へスクロール */
 function scrollToLyrics() {
   //* 現在位置は「passed」クラスの最後尾
@@ -256,9 +275,8 @@ function scrollToLyrics() {
   if (passedClassEls.length === 0) return;
   const jumpTo = passedClassEls[passedClassEls.length - 1];
   const clientRect = jumpTo.getBoundingClientRect();
-  const windowHeight = window.innerHeight;
-  const top = window.pageYOffset + clientRect.top - ((windowHeight + 100) / 2);
-  window.scroll({
+  const top = clientRect.top + lyricsEl.scrollTop - ((window.innerHeight + HEADER_HEIGHT) / 2) + CORRECTION;
+  lyricsEl.scroll({
     top,
     behavior: 'smooth',
   });
@@ -273,7 +291,7 @@ async function updateSongList(event) {
   const musicPath = '/Users/shiozawatakuto/Music/iTunes/iTunes Media/';
   //* 曲情報データベースを取得
   const db = new AsyncNedb({
-    filename: path.join(__dirname, 'db/songs.db'),
+    filename: Path.join(__dirname, 'db/songs.db'),
     autoload: true,
   });  
   //* 返ってきた曲を配列で取得し、それぞれ処理
@@ -305,7 +323,7 @@ async function searchSongs() {
   //* キーワードから曲を検索
   //* 曲情報データベースを取得
   const songDB = new AsyncNedb({
-    filename: path.join(__dirname, 'db/songs.db'),
+    filename: Path.join(__dirname, 'db/songs.db'),
     autoload: true,
   });
 
@@ -328,7 +346,7 @@ async function searchSongs() {
   //* 検索された曲を含むプレイリストを検索
   //* プレイリストデータベースを取得
   const playlistDB = new AsyncNedb({
-    filename: path.join(__dirname, 'db/playlists.db'),
+    filename: Path.join(__dirname, 'db/playlists.db'),
     autoload: true,
   });
 
@@ -338,9 +356,9 @@ async function searchSongs() {
 }
 
 /**
- * 秒数を時刻（MM:SS）にフォーマットするメソッド
+ * 秒数を時刻`MM:SS`にフォーマットするメソッド
  * @param {number} time 時間（秒）
- * @return {string} 時刻（MM:SS）
+ * @return {string} 時刻 `MM:SS`
  */
 function convertTime(time) {
   return Math.floor(time / 60) + ':' + ('0' + Math.floor(time % 60)).slice(-2);
@@ -386,12 +404,12 @@ async function togglePlay() {
   //* 再生リストが空の時
   if (!playArray.length) {
     const songDB = new AsyncNedb({
-      filename: path.join(__dirname, 'db/songs.db'),
+      filename: Path.join(__dirname, 'db/songs.db'),
       autoload: true,
     });
     //* 適当に曲を取ってきて再生リストに格納・再生
     //TODO: 再生リストの取得方法を決定する
-    playArray = await songDB.asyncFind({ title: /[あいう]/ });
+    playArray = await songDB.asyncFind(searchOption);
     getAndSetTrackInfo();
 
     prevEl.disabled = false;
@@ -407,6 +425,19 @@ async function togglePlay() {
     audioEl.pause();
   }
 }
+
+/**
+ * リサイズが完了した場合にのみ、引数の関数を実行するメソッド
+ * @param {Function} func リサイズ完了後に実行したい関数
+ */
+function completedFunction(func) {
+  let timer;
+  return function() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(func, 100);
+  };
+}
+
 
 //* アプリ読み込み時に
 window.onload = async () => {
@@ -427,14 +458,38 @@ window.onload = async () => {
   window.addEventListener('keydown', defaultKeyEvent);
 };
 
-//* ユーザーがスクロールした時、自動スクロールを停止
-document.addEventListener('wheel', () => {
+const leftMenuEl = document.getElementById('left-menu');
+const rightMenuEl = document.getElementById('right-menu');
+
+//* ウィンドウがリサイズが完了（と判定）した時
+window.addEventListener('resize', completedFunction(() => {
+  const win = Remote.getCurrentWindow();
+  const [width, height] = win.getSize();
+
+  const half = width / 2;
+  snapper.settings({
+    maxPosition: half,
+    minPosition: - half,
+  });
+
+  leftMenuEl.style.paddingRight = (width - half) + 'px';
+  rightMenuEl.style.paddingLeft = (width - half) + 'px';
+
+  if (height < MINIMUM_SIZE_FOR_LYRICS) {
+    win.setBounds({ height: HEADER_HEIGHT });
+  }
+}));
+
+//* ウィンドウをリサイズした時
+window.addEventListener('resize', () => snapper.close());
+
+//* 歌詞をスクロールした時、自動スクロールを停止
+lyricsEl.addEventListener('wheel', () => {
   isAuto = false;
   autoEl.className = 'display';
 });
 
 //* 閉じるボタン
-const closeEl = document.getElementById('close');
 closeEl.onclick = () => {
   Remote.getCurrentWindow().close();
 };
@@ -453,6 +508,7 @@ recordEl.addEventListener('change', (event) => {
     lyricsEl.classList.add('recording');
     //* 曲を最初から再生し始める
     audioEl.currentTime = 0;
+    lyricsEl.scroll({ top: 0 });
     //* デフォルトのキーイベントを削除
     window.removeEventListener('keydown', defaultKeyEvent);
     //* Enterボタン押下でタイム記録するイベント追加
@@ -488,10 +544,10 @@ progressEl.addEventListener('change', () => {
 });
 
 //* 曲情報をアップデート
-updateMusicEl.addEventListener('input', updateSongList);
+// updateMusicEl.addEventListener('input', updateSongList);
 
 //* 曲の検索
-searchEl.addEventListener('click', searchSongs);
+// searchEl.addEventListener('click', searchSongs);
 
 //* 再生/停止ボタンクリック
 playEl.addEventListener('click', async () => {
@@ -551,6 +607,7 @@ audioEl.addEventListener('timeupdate', () => {
   trackLyrics();
 });
 
+//* 音量が変更された時
 audioEl.addEventListener('volumechange', () => {
   const volume = audioEl.volume;
   volumeEl.value = volume;
@@ -558,4 +615,18 @@ audioEl.addEventListener('volumechange', () => {
     (volume > 0.5 && 'icon-volume-2') ||
     (volume > 0 && 'icon-volume-1') ||
     'icon-volume-off';
+});
+
+//* サムネイル表示テスト
+const imageEl = document.getElementById('image');
+const imageTestEl = document.getElementById('image-test');
+imageTestEl.addEventListener('click', () => {
+  const { path } = playArray[playingIndex];
+  const id3tag = NodeID3.read(path);
+  const buffer = id3tag.image.imageBuffer;
+  let binaryData = '';
+  for (let i = 0; i < buffer.length; i++) {
+    binaryData += String.fromCharCode(buffer[i]);
+  }
+  imageEl.src = 'data:image/jpeg;base64,' + window.btoa(binaryData);
 });

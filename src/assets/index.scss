@@ -5,6 +5,7 @@ $large-button-size: 60px;
 $small-button-size: 30px;
 $player-height: 48px;
 $player-padding-x: 8px;
+$lyrics-padding-buttom: calc((100vh - #{$header-height}) / 2);
 
 //* Mixin
 @mixin large-button() {
@@ -54,14 +55,10 @@ $player-padding-x: 8px;
 }
 
 // フロント
-//* ドラッグでウィンドウを動かす
-html {
-  -webkit-app-region: drag;
-}
-
 body {
   background-color: black;
   color: whitesmoke;
+  user-select: none;
 }
 
 // ボタン表示・非表示
@@ -80,6 +77,14 @@ body {
   height: $header-height;
   padding: 0 $header-padding-x;
   background-color: black;
+  z-index: 100;
+  //* ドラッグでウィンドウを動かす
+  -webkit-app-region: drag;
+  & input,
+  & button,
+  & label {
+    -webkit-app-region: no-drag;
+  }
   & #close {
     position: fixed;
     top: 5px;
@@ -145,6 +150,8 @@ body {
   height: $player-height;
   text-align: center;
   &__title {
+    white-space: nowrap;
+    overflow-x: scroll;
     font-size: 1.2rem;
     font-weight: bold;
   }
@@ -285,6 +292,7 @@ body {
   bottom: 10px;
   right: 10px;
   background-color: #2c2c2c;
+  z-index: 100;
   opacity: 0.4;
   @include hover-fade();
   &:hover {
@@ -294,8 +302,15 @@ body {
 
 //* 歌詞
 .lyrics {
-  padding: $header-height 20px 120px;
+  height: calc(100vh - #{$header-height} - #{$lyrics-padding-buttom});
+  padding: $header-height 20px $lyrics-padding-buttom;
+  width: auto;
   text-align: center;
+  background-color: black;
+  overflow-y: scroll;
+  &::-webkit-scrollbar {
+    display: none;
+  }
   & li {
     color:#a8a8a8;
     min-height: 1rem;
@@ -319,13 +334,20 @@ body {
   }
 }
 
+//* snap.js
+.snap-drawers {
+  display: none;
+  margin-top: $header-height;
+  .snapjs-right &.right,
+  .snapjs-left &.left {
+    display: block;
+  }
+}
+
 // reset css
 body {
   margin: 0 !important;
   padding: 0 !important;
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 ul {

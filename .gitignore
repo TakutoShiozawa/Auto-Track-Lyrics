@@ -5,3 +5,4 @@ src/db/
 src/node_modules/
 src/assets/simple-line-icons/
 AutoTrackingLyrics-darwin-x64/
+snap.*

@@ -26,7 +26,7 @@ class Playlist {
 //! 再生したい曲の正規表現
 
 const searchOption = {
-  album: /(nightcore)/i,
+  album: /(ノイ)/i,
 };
 //! -----------------------------
 
@@ -36,6 +36,8 @@ const HEADER_HEIGHT = 96;
 const MINIMUM_SIZE_FOR_LYRICS = 160;
 
 const closeEl = document.getElementById('close');
+const shuffleEl = document.getElementById('shuffle');
+const repeatEl = document.getElementById('repeat');
 const positionEl = document.getElementById('position');
 const progressEl = document.getElementById('progress');
 const durationEl = document.getElementById('duration');
@@ -65,6 +67,7 @@ let lyricsArray = [];
 let currentTime = 0;
 //* 再生リスト
 let playArray = [];
+let shuffledPlayArray = [];
 //* 再生リスト中の現在位置
 let playingIndex = 0;
 //* 再生状態
@@ -75,6 +78,10 @@ let timeArray = [];
 let recordedArray = [];
 //* オートスクロールさせる？
 let isAuto = true;
+//* シャッフルON?
+let isShuffle = false;
+//* リピートON?
+let isRepeat = false;
 //* フォントカラー
 let fontColor = 'red';
 const colorOption = ['red', 'blue', 'green', 'white'];
@@ -217,12 +224,11 @@ function quitRecord() {
 
 /** 曲が更新された時に歌詞（タイムテーブル）を取得 */
 function getAndSetTrackInfo() {
-  const { title, artist, path, timeTable } = playArray[playingIndex];
+  const array = isShuffle ? shuffledPlayArray : playArray;
+  const { title, artist, path, timeTable } = array[playingIndex];
   audioEl.src = path;
   audioEl.play();
 
-  const id3tag = NodeID3.read(path);
-  console.log(id3tag);
   titleEl.textContent = title;
   artistEl.textContent = artist;
   
@@ -399,18 +405,25 @@ function nextTrack() {
   getAndSetTrackInfo();
 }
 
+/** 再生リストを取得するメソッド */
+async function setPlayArray() {
+  const songDB = new AsyncNedb({
+    filename: Path.join(__dirname, 'db/songs.db'),
+    autoload: true,
+  });
+  //* 適当に曲を取ってきて再生リストに格納・再生
+  //TODO: 再生リストの取得方法を決定する
+  playArray = await songDB.asyncFind(searchOption);
+  shufflePlayArray();
+
+  getAndSetTrackInfo();
+}
+
 /** 再生状態をスイッチするメソッド */
 async function togglePlay() {
   //* 再生リストが空の時
   if (!playArray.length) {
-    const songDB = new AsyncNedb({
-      filename: Path.join(__dirname, 'db/songs.db'),
-      autoload: true,
-    });
-    //* 適当に曲を取ってきて再生リストに格納・再生
-    //TODO: 再生リストの取得方法を決定する
-    playArray = await songDB.asyncFind(searchOption);
-    getAndSetTrackInfo();
+    await setPlayArray();
 
     prevEl.disabled = false;
     nextEl.disabled = false;
@@ -438,6 +451,27 @@ function completedFunction(func) {
   };
 }
 
+/** 再生リストをシャッフルするメソッド */
+function shufflePlayArray() {
+  const array = [...playArray];
+  //* 再生中の曲を配列から除く
+  const first = array.splice(playingIndex, 1);
+  //* ランダム配置
+  for (let i = array.length - 1; i >= 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  //* 再生中の曲を先頭に配置
+  shuffledPlayArray = [...first, ...array];
+  playingIndex = 0;
+}
+
+/** 再生リストをもとに戻す */
+function undoPlayArray() {
+  const id = shuffledPlayArray[playingIndex]._id;
+  //* 再生中のインデックスを再入手
+  playingIndex = playArray.findIndex(song => song._id === id);
+}
 
 //* アプリ読み込み時に
 window.onload = async () => {
@@ -463,18 +497,21 @@ const rightMenuEl = document.getElementById('right-menu');
 
 //* ウィンドウがリサイズが完了（と判定）した時
 window.addEventListener('resize', completedFunction(() => {
+  //* 現在のウィンドウサイズを取得
   const win = Remote.getCurrentWindow();
   const [width, height] = win.getSize();
 
+  //* Snap.jsを操作
   const half = width / 2;
   snapper.settings({
     maxPosition: half,
     minPosition: - half,
   });
-
+  //* Snap.jsに影響するスタイルを更新
   leftMenuEl.style.paddingRight = (width - half) + 'px';
   rightMenuEl.style.paddingLeft = (width - half) + 'px';
 
+  //* 中途半端な高さを弾く
   if (height < MINIMUM_SIZE_FOR_LYRICS) {
     win.setBounds({ height: HEADER_HEIGHT });
   }
@@ -482,12 +519,6 @@ window.addEventListener('resize', completedFunction(() => {
 
 //* ウィンドウをリサイズした時
 window.addEventListener('resize', () => snapper.close());
-
-//* 歌詞をスクロールした時、自動スクロールを停止
-lyricsEl.addEventListener('wheel', () => {
-  isAuto = false;
-  autoEl.className = 'display';
-});
 
 //* 閉じるボタン
 closeEl.onclick = () => {
@@ -576,6 +607,27 @@ volumeEl.addEventListener('input', (event) => {
 //* 音量つまみの操作終了時
 volumeEl.addEventListener('change', () => volumeEl.blur());
 
+//* 歌詞をスクロールした時、自動スクロールを停止
+lyricsEl.addEventListener('wheel', () => {
+  isAuto = false;
+  autoEl.className = 'display';
+});
+
+//* シャッフルボタン
+shuffleEl.addEventListener('change', (event) => {
+  isShuffle = event.target.checked;
+  if (isShuffle) {
+    //* 再生リストをもとにシャッフルする
+    shufflePlayArray();
+  } else {
+    //* もとの再生リストの順番で再生する
+    undoPlayArray();
+  }
+});
+
+//* リピートボタン, 変数を更新するのみ
+repeatEl.addEventListener('change', (event) => isRepeat = event.target.checked);
+
 //* 一時停止した時
 audioEl.addEventListener('pause', () => {
   playerState = 'pause';
@@ -589,7 +641,16 @@ audioEl.addEventListener('play', () => {
 });
 
 //* 曲が最後まで行った時
-audioEl.addEventListener('ended', nextTrack);
+audioEl.addEventListener('ended', () => {
+  //* リピートがONの場合
+  if (isRepeat) {
+    audioEl.currentTime = 0;
+    lyricsEl.scroll({ top: 0 });
+    audioEl.play();
+    return;
+  }
+  nextTrack();
+});
 
 //* 曲が読み込まれた時、再生時間を更新
 audioEl.addEventListener('loadeddata', () => {

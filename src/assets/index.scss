@@ -107,6 +107,28 @@ body {
   }
 }
 
+//* トグルアイコン
+.toggle-icon {
+  @include small-button();
+  position: relative;
+  margin: 0 auto;
+  padding: 0;
+  color: white;
+  & input[type="checkbox"] {
+    position: absolute;
+    visibility: hidden;
+    & ~ i {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate3d(-50%, -50%, 0);
+    }
+    &:checked ~ i {
+      color: #3887ff;
+    }
+  }
+}
+
 //* プログレスバー
 .progress {
   display: flex;
@@ -119,7 +141,7 @@ body {
     appearance: none;
     margin: 0 8px 2px;
     height: 6px;
-    width: 75%;
+    width: 60%;
     outline: none;
     border-radius: 3px;
     background-color: #333;

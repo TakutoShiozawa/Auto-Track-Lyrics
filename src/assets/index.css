@@ -59,6 +59,42 @@ body {
           transition-delay: 0s;
 }
 
+.toggle-icon {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 50%;
+  -webkit-transition: .3s;
+  transition: .3s;
+  position: relative;
+  margin: 0 auto;
+  padding: 0;
+  color: white;
+}
+
+.toggle-icon:hover {
+  background-color: #2c2c2c;
+}
+
+.toggle-icon input[type="checkbox"] {
+  position: absolute;
+  visibility: hidden;
+}
+
+.toggle-icon input[type="checkbox"] ~ i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate3d(-50%, -50%, 0);
+          transform: translate3d(-50%, -50%, 0);
+}
+
+.toggle-icon input[type="checkbox"]:checked ~ i {
+  color: #3887ff;
+}
+
 .progress {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -80,7 +116,7 @@ body {
           appearance: none;
   margin: 0 8px 2px;
   height: 6px;
-  width: 75%;
+  width: 60%;
   outline: none;
   border-radius: 3px;
   background-color: #333;

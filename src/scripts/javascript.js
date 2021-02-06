@@ -1,6 +1,7 @@
 const path = require('path');
 const NodeID3 = require('node-id3');
 const { AsyncNedb } = require('nedb-async');
+const Remote = require('electron').remote;
 
 /** 曲クラス */
 class Song {
@@ -22,22 +23,23 @@ class Playlist {
   }
 }
 
-const autoEl = document.getElementById('auto');
-const recordEl = document.getElementById('record');
-const colorEl = document.getElementById('color');
-const colorSelectEl = document.getElementsByClassName('color-select')[0];
-const titleEl = document.getElementById('title');
-const artistEl = document.getElementById('artist');
-const durationEl = document.getElementById('duration');
+const closeEl = document.getElementById('close');
 const positionEl = document.getElementById('position');
 const progressEl = document.getElementById('progress');
+const durationEl = document.getElementById('duration');
+const titleEl = document.getElementById('title');
+const artistEl = document.getElementById('artist');
+const recordEl = document.getElementById('record');
 const prevEl = document.getElementById('prev');
 const playEl = document.getElementById('play');
 const nextEl = document.getElementById('next');
 const volumeEl = document.getElementById('volume');
 const volumeIconEl = document.getElementById('volume-icon');
-const audioEl = document.getElementById('audio');
+const colorEl = document.getElementById('color');
+const colorSelectEl = document.getElementsByClassName('color-select')[0];
 const lyricsEl = document.getElementById('lyrics');
+const autoEl = document.getElementById('auto');
+const audioEl = document.getElementById('audio');
 const updateMusicEl = document.getElementById('update-music');
 const searchEl = document.getElementById('search-song');
 const keywordEl = document.getElementById('keyword');
@@ -430,6 +432,12 @@ document.addEventListener('wheel', () => {
   isAuto = false;
   autoEl.className = 'display';
 });
+
+//* 閉じるボタン
+const closeEl = document.getElementById('close');
+closeEl.onclick = () => {
+  Remote.getCurrentWindow().close();
+};
 
 //* AUTOボタンクリック時、自動スクロールの開始
 autoEl.addEventListener('click', () => {

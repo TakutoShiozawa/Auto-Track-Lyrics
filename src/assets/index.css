@@ -1,4 +1,8 @@
 @charset "UTF-8";
+html {
+  -webkit-app-region: drag;
+}
+
 body {
   background-color: black;
   color: whitesmoke;
@@ -19,6 +23,32 @@ body {
   height: 96px;
   padding: 0 16px;
   background-color: black;
+}
+
+.header #close {
+  position: fixed;
+  top: 5px;
+  left: 5px;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: none;
+  border-radius: 50%;
+  background-color: transparent;
+  color: white;
+  opacity: 0;
+  -webkit-transition: .5s;
+  transition: .5s;
+  -webkit-transition-delay: .5s;
+          transition-delay: .5s;
+}
+
+.header:hover #close {
+  opacity: 1;
+  -webkit-transition: 0s;
+  transition: 0s;
+  -webkit-transition-delay: 0s;
+          transition-delay: 0s;
 }
 
 .progress {
@@ -171,12 +201,6 @@ body {
 
 .player__buttons button:hover {
   background-color: #2c2c2c;
-}
-
-.player__buttons .spacer {
-  display: inline-block;
-  width: 20px;
-  height: 10px;
 }
 
 .record {

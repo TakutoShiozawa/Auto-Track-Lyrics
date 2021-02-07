@@ -31,7 +31,7 @@ async function createWindow() {
     width: windowWidth,
     height: windowHeight,
     minWidth: 360,
-    minHeight: 96,
+    minHeight: 100,
     maxWidth: 600,
     maxHeight: screenHeight,
     alwaysOnTop: true,

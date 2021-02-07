@@ -20,7 +20,7 @@ body {
   display: block;
   position: fixed;
   width: calc(100% - 16px * 2);
-  height: 96px;
+  height: 100px;
   padding: 0 16px;
   background-color: black;
   z-index: 100;
@@ -92,7 +92,7 @@ body {
 }
 
 .toggle-icon input[type="checkbox"]:checked ~ i {
-  color: #3887ff;
+  color: #227afd;
 }
 
 .progress {
@@ -106,7 +106,7 @@ body {
       -ms-flex-align: center;
           align-items: center;
   width: 100%;
-  margin: 8px 0;
+  margin: 8px 0 0;
   font-size: 0.8rem;
 }
 
@@ -146,7 +146,7 @@ body {
 .player {
   position: relative;
   display: block;
-  height: 48px;
+  height: 60px;
   text-align: center;
 }
 
@@ -166,7 +166,7 @@ body {
   top: 0;
   left: 0;
   width: calc(100% - (8px * 2));
-  height: 48px;
+  height: 60px;
   padding: 0 8px;
   display: -webkit-box;
   display: -ms-flexbox;
@@ -394,6 +394,122 @@ body {
   color: white;
 }
 
+.tabs input[type="radio"] {
+  position: absolute;
+  visibility: hidden;
+}
+
+.tabs__wrapper {
+  position: fixed;
+  top: 100px;
+  left: 0;
+  width: 75%;
+  height: 20px;
+  margin: 0 auto;
+  padding: 6px 12.5% 12px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  font-size: 0.75rem;
+  color: white;
+  background-color: black;
+  border-radius: 5px;
+}
+
+.tabs__wrapper label {
+  width: 50%;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  padding-top: 1px;
+  text-align: center;
+  background-color: gray;
+}
+
+.tabs__wrapper label i {
+  margin-right: 12px;
+}
+
+.tabs__wrapper label:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.tabs__wrapper label:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.tabs__content {
+  display: none;
+  width: auto;
+  text-align: center;
+  background-color: black;
+  overflow-y: scroll;
+}
+
+.tabs__content::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs__content.play-array {
+  height: calc(100vh - calc(100px + 20px + 6px + 12px) - 12px);
+  padding: calc(100px + 20px + 6px + 12px) 20px 12px;
+}
+
+.tabs__content.lyrics {
+  height: calc(100vh - calc(100px + 20px + 6px + 12px) - calc((100vh - calc(100px + 20px + 6px + 12px)) / 2));
+  padding: calc(100px + 20px + 6px + 12px) 20px calc((100vh - calc(100px + 20px + 6px + 12px)) / 2);
+}
+
+.tabs__content.lyrics li {
+  color: #a8a8a8;
+  min-height: 1rem;
+}
+
+.tabs__content.lyrics li.passed {
+  font-weight: bold;
+}
+
+.tabs__content.lyrics li.passed.red {
+  color: red;
+}
+
+.tabs__content.lyrics li.passed.blue {
+  color: cyan;
+}
+
+.tabs__content.lyrics li.passed.green {
+  color: greenyellow;
+}
+
+.tabs__content.lyrics li.passed.white {
+  color: white;
+}
+
+.tabs__content.lyrics li.passed.none {
+  font-weight: normal;
+}
+
+.tabs__content.lyrics.recording li.passed + li:not(.passed) {
+  border-bottom: solid 1px white;
+}
+
+.tabs__content.lyrics.recording li.passed + li:not(.passed)::before {
+  content: "次→ ";
+}
+
+.tabs #play-array-radio:checked ~ .tabs__wrapper #play-array-label,
+.tabs #lyrics-radio:checked ~ .tabs__wrapper #lyrics-label {
+  background-color: #1462d6;
+}
+
+.tabs #play-array-radio:checked ~ #play-array,
+.tabs #lyrics-radio:checked ~ #lyrics {
+  display: block;
+}
+
 #auto {
   position: relative;
   width: 60px;
@@ -441,59 +557,9 @@ body {
   opacity: 1;
 }
 
-.lyrics {
-  height: calc(100vh - 96px - calc((100vh - 96px) / 2));
-  padding: 96px 20px calc((100vh - 96px) / 2);
-  width: auto;
-  text-align: center;
-  background-color: black;
-  overflow-y: scroll;
-}
-
-.lyrics::-webkit-scrollbar {
-  display: none;
-}
-
-.lyrics li {
-  color: #a8a8a8;
-  min-height: 1rem;
-}
-
-.lyrics li.passed {
-  font-weight: bold;
-}
-
-.lyrics li.passed.red {
-  color: red;
-}
-
-.lyrics li.passed.blue {
-  color: cyan;
-}
-
-.lyrics li.passed.green {
-  color: greenyellow;
-}
-
-.lyrics li.passed.white {
-  color: white;
-}
-
-.lyrics li.passed.none {
-  font-weight: normal;
-}
-
-.lyrics.recording li.passed + li:not(.passed) {
-  border-bottom: solid 1px white;
-}
-
-.lyrics.recording li.passed + li:not(.passed)::before {
-  content: "次→ ";
-}
-
 .snap-drawers {
   display: none;
-  margin-top: 96px;
+  margin-top: 100px;
 }
 
 .snapjs-right .snap-drawers.right,

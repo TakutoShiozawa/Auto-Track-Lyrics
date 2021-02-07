@@ -1,11 +1,16 @@
 //* 定数
-$header-height: 96px;
+$header-height: 100px;
 $header-padding-x: 16px;
 $large-button-size: 60px;
 $small-button-size: 30px;
-$player-height: 48px;
+$player-height: 60px;
 $player-padding-x: 8px;
-$lyrics-padding-buttom: calc((100vh - #{$header-height}) / 2);
+$tabs-height: 20px;
+$tabs-padding-top: 6px;
+$tabs-padding-bottom: 12px;
+$content-padding-top: calc(#{$header-height} + #{$tabs-height} + #{$tabs-padding-top} + #{$tabs-padding-bottom});
+$content-padding-buttom: calc((100vh - #{$content-padding-top}) / 2);
+$content-padding-x: 20px;
 
 //* Mixin
 @mixin large-button() {
@@ -124,7 +129,7 @@ body {
       transform: translate3d(-50%, -50%, 0);
     }
     &:checked ~ i {
-      color: #3887ff;
+      color: #227afd;
     }
   }
 }
@@ -135,7 +140,7 @@ body {
   justify-content: center;
   align-items: center;
   width: 100%;
-  margin: 8px 0;
+  margin: 8px 0 0;
   font-size: 0.8rem;
   & input[type="range"] {
     appearance: none;
@@ -307,6 +312,98 @@ body {
   &.white { color: white; }
 }
 
+//* タブ
+.tabs {
+  & input[type="radio"] {
+    position: absolute;
+    visibility: hidden;
+  }
+  &__wrapper {
+    position: fixed;
+    top: $header-height;
+    left: 0;
+    width: 75%;
+    height: $tabs-height;
+    margin: 0 auto;
+    padding: $tabs-padding-top 12.5% $tabs-padding-bottom;
+    display: flex;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: white;
+    background-color: black;
+    border-radius: 5px;
+    & label {
+      width: 50%;
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      padding-top: 1px;
+      text-align: center;
+      background-color: gray;
+      & i {
+        margin-right: 12px;
+      }
+      &:first-child {
+        border-radius: 4px 0 0 4px;
+      }
+      &:last-child {
+        border-radius: 0 4px 4px 0;
+      }
+    }
+  }
+  &__content {
+    display: none;
+    width: auto;
+    text-align: center;
+    background-color: black;
+    overflow-y: scroll;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    //* 再生リスト
+    &.play-array {
+      height: calc(100vh - #{$content-padding-top} - 12px);
+      padding: $content-padding-top $content-padding-x 12px;
+    }
+    //* 歌詞
+    &.lyrics {
+      height: calc(100vh - #{$content-padding-top} - #{$content-padding-buttom});
+      padding: $content-padding-top $content-padding-x $content-padding-buttom;
+      & li {
+        color:#a8a8a8;
+        min-height: 1rem;
+        &.passed {
+          font-weight: bold;
+          &.red { color: red; }
+          &.blue { color: cyan; }
+          &.green { color: greenyellow }
+          &.white { color: white; }
+          &.none { font-weight: normal; }
+        }
+      }
+      //* タイムテーブル登録時の次歌詞の位置をわかりやすく
+      &.recording li.passed {
+        & + li:not(.passed) {
+          border-bottom: solid 1px white;
+          &::before {
+            content: "次→ ";
+          }
+        }
+      }
+    }
+  }
+  //* 選択されているタブの色を変える
+  & #play-array-radio:checked ~ &__wrapper #play-array-label,
+  & #lyrics-radio:checked ~ &__wrapper #lyrics-label {
+    background-color: #1462d6;
+  }
+  //* 選択しているタブのコンテンツを表示
+  & #play-array-radio:checked ~ #play-array,
+  & #lyrics-radio:checked ~ #lyrics {
+    display: block;
+  }
+}
+
 //* AUTOボタン
 #auto {
   @include large-button();
@@ -322,39 +419,6 @@ body {
   }
 }
 
-//* 歌詞
-.lyrics {
-  height: calc(100vh - #{$header-height} - #{$lyrics-padding-buttom});
-  padding: $header-height 20px $lyrics-padding-buttom;
-  width: auto;
-  text-align: center;
-  background-color: black;
-  overflow-y: scroll;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  & li {
-    color:#a8a8a8;
-    min-height: 1rem;
-    &.passed {
-      font-weight: bold;
-      &.red { color: red; }
-      &.blue { color: cyan; }
-      &.green { color: greenyellow }
-      &.white { color: white; }
-      &.none { font-weight: normal; }
-    }
-  }
-  //* タイムテーブル登録時の次歌詞の位置をわかりやすく
-  &.recording li.passed {
-    & + li:not(.passed) {
-      border-bottom: solid 1px white;
-      &::before {
-        content: "次→ ";
-      }
-    }
-  }
-}
 
 //* snap.js
 .snap-drawers {

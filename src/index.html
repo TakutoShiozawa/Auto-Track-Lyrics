@@ -59,8 +59,19 @@
         </div>
       </div>
     </div>
-    <div id="snap" class="snap-content">
-      <ul id="lyrics" class="lyrics"></ul>
+    <div id="snap" class="snap-content tabs">
+      <input id="play-array-radio" type="radio" name="tabs">
+      <input id="lyrics-radio" type="radio" name="tabs" checked>
+      <div class="tabs__wrapper">
+        <label id="play-array-label" for="play-array-radio">
+          <i class="icon-playlist"></i>再生リスト
+        </label>
+        <label id="lyrics-label" for="lyrics-radio">
+          <i class="icon-notebook"></i>歌詞
+        </label>
+      </div>
+      <ul id="lyrics" class="tabs__content lyrics"></ul>
+      <ul id="play-array" class="tabs__content play-array"></ul>
       <audio id="audio" type="audio/mpeg"></audio>
       <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
     </div>

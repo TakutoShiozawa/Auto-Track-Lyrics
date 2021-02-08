@@ -61,8 +61,9 @@
     </div>
     <div id="snap" class="snap-content tabs">
       <input id="play-array-radio" type="radio" name="tabs">
+      <!-- <input id="lyrics-radio" type="radio" name="tabs"> -->
       <input id="lyrics-radio" type="radio" name="tabs" checked>
-      <div class="tabs__wrapper">
+      <div class="tabs__wrapper main">
         <label id="play-array-label" for="play-array-radio">
           <i class="icon-playlist"></i>再生リスト
         </label>
@@ -70,8 +71,21 @@
           <i class="icon-notebook"></i>歌詞
         </label>
       </div>
+      <input id="candidate-radio" type="radio" name="tabs">
+      <input id="checked-radio" type="radio" name="tabs">
+      <!-- <input id="checked-radio" type="radio" name="tabs" checked> -->
+      <div class="tabs__wrapper register">
+        <label id="candidate-label" for="candidate-radio">
+          <i class="icon-menu"></i>候補リスト
+        </label>
+        <label id="checked-label" for="checked-radio">
+          <i class="icon-check"></i>選択済み
+        </label>
+      </div>
+      <ul id="play-array" class="tabs__content song-array"></ul>
       <ul id="lyrics" class="tabs__content lyrics"></ul>
-      <ul id="play-array" class="tabs__content play-array"></ul>
+      <ul id="candidate" class="tabs__content song-array"></ul>
+      <ul id="checked" class="tabs__content checked"></ul>
       <audio id="audio" type="audio/mpeg"></audio>
       <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
     </div>

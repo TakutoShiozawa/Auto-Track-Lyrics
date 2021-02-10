@@ -411,6 +411,33 @@ body {
         padding-top: 4px;
         padding-left: 60px;
         border-top: solid 1px #3f3f3f;
+        & label {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+        & input {
+          position: absolute;
+          visibility: hidden;
+          &:checked {
+            & + label::after {
+              content: "✔︎";
+              position: absolute;
+              top: 50%;
+              right: 12px;
+              transform: translateY(-50%);
+              color: white;
+            }
+            & ~ span {
+              padding-right: 30px;
+            }
+          }
+        }
+        &:hover {
+          background-color: #444;
+        }
         & + & {
           margin-top: 1px;
         }
@@ -420,7 +447,7 @@ body {
         & img {
           position: absolute;
           top: 2px;
-          left: 0;
+          left: 3px;
           max-width: 48px;
           max-height: 48px;
           border-radius: 3px;
@@ -430,7 +457,7 @@ body {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          &:nth-child(3) {
+          & + span {
             font-size: 0.8rem;
             color: #9e9e9e;
           }

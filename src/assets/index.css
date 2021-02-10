@@ -523,6 +523,37 @@ body {
   border-top: solid 1px #3f3f3f;
 }
 
+.tabs__content.song-array li label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tabs__content.song-array li input {
+  position: absolute;
+  visibility: hidden;
+}
+
+.tabs__content.song-array li input:checked + label::after {
+  content: "✔︎";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  -webkit-transform: translateY(-50%);
+          transform: translateY(-50%);
+  color: white;
+}
+
+.tabs__content.song-array li input:checked ~ span {
+  padding-right: 30px;
+}
+
+.tabs__content.song-array li:hover {
+  background-color: #444;
+}
+
 .tabs__content.song-array li + .tabs__content.song-array li {
   margin-top: 1px;
 }
@@ -534,7 +565,7 @@ body {
 .tabs__content.song-array li img {
   position: absolute;
   top: 2px;
-  left: 0;
+  left: 3px;
   max-width: 48px;
   max-height: 48px;
   border-radius: 3px;
@@ -547,7 +578,7 @@ body {
   text-overflow: ellipsis;
 }
 
-.tabs__content.song-array li span:nth-child(3) {
+.tabs__content.song-array li span + span {
   font-size: 0.8rem;
   color: #9e9e9e;
 }

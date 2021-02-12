@@ -435,22 +435,54 @@ body {
             }
           }
         }
-        &:hover {
-          background-color: #444;
-        }
-        & + & {
-          margin-top: 1px;
-        }
-        &:last-child {
-          border-bottom: solid 1px #3f3f3f;
-        }
-        & img {
+        & .artwork {
           position: absolute;
           top: 2px;
           left: 3px;
-          max-width: 48px;
-          max-height: 48px;
+          width: 48px;
+          height: 48px;
           border-radius: 3px;
+          & img {
+            max-width: 48px;
+            max-height: 48px;
+          }
+          & .playing-animation {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.7;
+            background-color: #444;
+            & div {
+              display: inline-block;
+              width: 4px;
+              height: 35px;
+              border-radius: 2px;
+              margin: 2px;
+              background-color: #777;
+              animation-fill-mode: both;
+              animation: line-scale-pulse-out 0.9s -0.6s infinite cubic-bezier(0.85, 0.25, 0.37, 0.85);
+              &:nth-child(2) {
+                animation-delay: -0.4s !important;
+              }
+              &:nth-child(3) {
+                animation-delay: -0.2s !important;
+              }
+            }
+          }
+        }
+        &.playing {
+          background-color: #333;
+          & .playing-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          &.paused .playing-animation div {
+            animation-play-state: paused;
+          }
         }
         & span {
           display: block;
@@ -461,6 +493,15 @@ body {
             font-size: 0.8rem;
             color: #9e9e9e;
           }
+        }
+        & + & {
+          margin-top: 1px;
+        }
+        &:last-child {
+          border-bottom: solid 1px #3f3f3f;
+        }
+        &:hover {
+          background-color: #444;
         }
       }
     }
@@ -486,6 +527,18 @@ body {
   @include hover-fade();
   &:hover {
     opacity: 1;
+  }
+}
+
+@keyframes line-scale-pulse-out {
+  0% {
+    transform: scaley(1);
+  }
+  50% {
+    transform: scaley(0.4);
+  }
+  100% {
+    transform: scaley(1);
   }
 }
 

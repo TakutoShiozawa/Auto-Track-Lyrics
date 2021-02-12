@@ -163,6 +163,8 @@ let isAuto = true;
 let isShuffle = false;
 /** リピートON? */
 let isRepeat = false;
+/** 戻り曲数 */
+let backCount = 0;
 /** フォントカラー */
 let fontColor = 'red';
 /** @type {Array<string>} フォントカラーオプション */
@@ -212,15 +214,8 @@ function backTrack() {
     return;
   }
 
+  backCount++;
   playingIndex = playingIndex ? playingIndex - 1 : playArray.length - 1;
-  const elem = createSongElement(playingSong(), playArrayEl);
-  const imgEl = elem.querySelector('img');
-  playingSong().displayArtwork(imgEl);
-  //* ダブルクリックで再生するイベントハンドラを設定
-  const index = playingIndex;
-  elem.addEventListener('dblclick', () => dblclickToPlay(elem, index));
-  playArrayEl.prepend(elem);
-
   getAndSetTrackInfo();
 }
 
@@ -233,18 +228,18 @@ function nextTrack() {
   ) return;
   
   //* 再生リストの最後まで行ったら0から
-  if (playArrayEl.childElementCount === 1) {
+  if (playArray.length - 1 === playingIndex) {
     playingIndex = 0;
     //* シャッフル機能がONの場合、再びシャッフルを行う
-    if (isShuffle) shufflePlayArray();
-    setArrayToList(playArrayEl, playingArray());
+    if (isShuffle && !backCount) {
+      shufflePlayArray();
+      setArrayToList(playArrayEl, playingArray());
+    }
   } else {
-    playArrayEl.removeChild(playArrayEl.firstElementChild);
-    playingIndex = playArray.length - 1 === playingIndex
-      ? 0
-      : playingIndex + 1;
+    playingIndex++;
   }
-  
+
+  backCount = Math.max(--backCount, 0);
   getAndSetTrackInfo();
 }
 
@@ -261,10 +256,12 @@ async function togglePlay() {
   //* 停止中の場合、「再生」
   if (playerState === 'pause') {
     audioEl.play();
+    document.querySelector('.paused').classList.remove('paused');
   }
   //* 再生中の場合、「停止」
   if (playerState === 'playing') {
     audioEl.pause();
+    document.querySelector('.playing').classList.add('paused');
   }
 }
 
@@ -308,6 +305,8 @@ function getAndSetTrackInfo() {
   isAuto = true;
   autoEl.className = 'display-none';
   recordEl.disabled = lyricsArray.length === 0;
+
+  movePlayingClass();
 }
 
 /**
@@ -317,22 +316,25 @@ function getAndSetTrackInfo() {
  */
 function createSongElement(song, target) {
   const li = document.createElement('li');
+  const artwork = document.createElement('div');
   const img = document.createElement('img');
   const title = document.createElement('span');
   const artist = document.createElement('span');
 
+  artwork.className = 'artwork';
   title.textContent = song.title;
   artist.textContent = song.artist;
 
   if (target === candidateEl) {
+    //* リストにチェックをつける機構を追加
     const checkbox = document.createElement('input');
     const label = document.createElement('label');
     /** ランダムID */
     const randomId = getRandomStr();
-
     checkbox.type = 'checkbox';
     checkbox.id = 'checkbox-' + randomId;
     label.htmlFor = 'checkbox-' + randomId;
+
     //* チェックボックスにイベントハンドラを設定
     checkbox.addEventListener('change', (event) => {
       if (event.target.checked) {
@@ -343,10 +345,21 @@ function createSongElement(song, target) {
     });
     li.append(checkbox, label);
   } else if (target === playArrayEl) {
+    //* 再生中を示すアニメーションを追加
+    const playingAnimation = document.createElement('div');
+    const line1 = document.createElement('div');
+    const line2 = document.createElement('div');
+    const line3 = document.createElement('div');
+    playingAnimation.className = 'playing-animation';
+    playingAnimation.append(line1, line2, line3);
+    artwork.append(playingAnimation);
+
     //* ダブルクリックでその曲を再生するイベントハンドラを設定
     li.addEventListener('dblclick', () => dblclickToPlay(li, song.index));
   }
-  li.append(img, title, artist);
+
+  artwork.prepend(img);
+  li.append(artwork, title, artist);
   return li;
 }
 
@@ -365,14 +378,7 @@ function dblclickToPlay(elem, index) {
   if (elem.classList.contains('playing')) return;
 
   playingIndex = index;
-  //* 再生中の曲の playingクラスを削除
-  playArrayEl.firstElementChild.classList.remove('playing');
-  //* 再生したい曲に playingクラスを追加
-  elem.classList.add('playing');
-  while (!playArrayEl.firstElementChild.classList.contains('playing')) {
-    playArrayEl.removeChild(playArrayEl.firstChild);
-  }
-
+  backCount = 0;
   getAndSetTrackInfo();
 }
 
@@ -399,7 +405,7 @@ function setArrayToList(target, array) {
   /** ul要素に挿入するli要素の配列 */
   const addList = [];
   //* 曲ごとにli要素を作成、データ挿入
-  for (let i = playingIndex, len = array.length; i < len; i++) {
+  for (let i = 0, len = array.length; i < len; i++) {
     const elem = createSongElement(array[i], target);
 
     //* 表示された時にアートワークを読み込むイベントハンドラを設定
@@ -407,6 +413,8 @@ function setArrayToList(target, array) {
       const imgEl = el.querySelector('img');
       array[i].displayArtwork(imgEl);
     });
+    //* 再生中の曲に "playing" classを追加
+    if (i === playingIndex) elem.classList.add('playing');
     addList.push(elem);
   }
   //* リスト既存のリストを削除してから追加する
@@ -443,6 +451,12 @@ function delayLoad(target, elem, callback) {
 
   //* ドキュメントの構築を待ってから初期化する
   window.setTimeout(checkVisibility, 0);
+}
+
+function movePlayingClass() {
+  const playing = playArrayEl.querySelector('.playing');
+  if (playing) playing.classList.remove('playing');
+  playArrayEl.children[playingIndex].classList.add('playing');
 }
 
 /**
@@ -507,13 +521,6 @@ function shufflePlayArray(isAll = true) {
   //* 再生中の曲を先頭に配置
   shuffledPlayArray = [...first, ...array];
   playingIndex = 0;
-}
-
-/** 再生リストをもとに戻す */
-function undoPlayArray() {
-  const id = playingSong()._id;
-  //* 再生中のインデックスを再入手
-  playingIndex = playArray.findIndex(song => song._id === id);
 }
 
 /**
@@ -778,9 +785,9 @@ window.onload = async () => {
   });
   const songs = await songDB.asyncFind({ timeTable: { $exists: true } }, [['sort', { title: -1 }], ['limit', 100]]);
   playArray = songs.map(song => new Song(song));
-  setArrayToList(playArrayEl, playArray);
-  candidateArray = songs.map(song => new Song(song));
-  setArrayToList(candidateEl, candidateArray);
+  // setArrayToList(playArrayEl, playArray);
+  // candidateArray = songs.map(song => new Song(song));
+  // setArrayToList(candidateEl, candidateArray);
   //TODO ------------------------------------------
   //TODO ------------------------------------------
   //TODO: ここまで

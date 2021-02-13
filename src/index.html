@@ -61,8 +61,8 @@
     </div>
     <div id="snap" class="snap-content tabs">
       <input id="play-array-radio" type="radio" name="tabs">
-      <!-- <input id="lyrics-radio" type="radio" name="tabs"> -->
-      <input id="lyrics-radio" type="radio" name="tabs" checked>
+      <input id="lyrics-radio" type="radio" name="tabs">
+      <!-- <input id="lyrics-radio" type="radio" name="tabs" checked> -->
       <div class="tabs__wrapper main">
         <label id="play-array-label" for="play-array-radio">
           <i class="icon-playlist"></i>再生リスト
@@ -72,14 +72,19 @@
         </label>
       </div>
       <input id="candidate-radio" type="radio" name="tabs">
-      <input id="checked-radio" type="radio" name="tabs">
-      <!-- <input id="checked-radio" type="radio" name="tabs" checked> -->
+      <!-- <input id="checked-radio" type="radio" name="tabs"> -->
+      <input id="checked-radio" type="radio" name="tabs" checked>
       <div class="tabs__wrapper register">
         <label id="candidate-label" for="candidate-radio">
           <i class="icon-menu"></i>候補リスト
         </label>
         <label id="checked-label" for="checked-radio">
           <i class="icon-check"></i>選択済み
+        </label>
+      </div>
+      <div class="tabs__search">
+        <label>
+          <input id="search" placeholder="曲を検索">
         </label>
       </div>
       <ul id="play-array" class="tabs__content song-array">
@@ -100,14 +105,12 @@
       </ul>
       <ul id="lyrics" class="tabs__content lyrics"></ul>
       <ul id="candidate" class="tabs__content song-array"></ul>
-      <ul id="checked" class="tabs__content checked"></ul>
+      <ul id="checked" class="tabs__content song-array"></ul>
       <audio id="audio" type="audio/mpeg"></audio>
       <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
     </div>
     <div id="left-menu" class="snap-drawers left">
       <input id="update-music" type="file" accept="audio/*" webkitdirectory>
-      <input id="keyword">
-      <button id="search-song">検索</button>
     </div>
     <div id="right-menu" class="snap-drawers right">
       <button id="image-test">テスト</button>

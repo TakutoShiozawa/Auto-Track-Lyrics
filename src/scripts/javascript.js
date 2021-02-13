@@ -130,8 +130,7 @@ const checkedEl     = document.getElementById('checked');
 const autoEl        = document.getElementById('auto');
 const audioEl       = document.getElementById('audio');
 const updateMusicEl = document.getElementById('update-music');
-const searchEl      = document.getElementById('search-song');
-const keywordEl     = document.getElementById('keyword');
+const searchEl      = document.getElementById('search');
 const leftMenuEl    = document.getElementById('left-menu');
 const rightMenuEl   = document.getElementById('right-menu');
 
@@ -314,7 +313,7 @@ function getAndSetTrackInfo() {
  * @param {Song} song 曲オブジェクト
  * @return {HTMLLIElement}
  */
-function createSongElement(song, target) {
+function createSongElement(target, song) {
   const li = document.createElement('li');
   const artwork = document.createElement('div');
   const img = document.createElement('img');
@@ -329,18 +328,22 @@ function createSongElement(song, target) {
     //* リストにチェックをつける機構を追加
     const checkbox = document.createElement('input');
     const label = document.createElement('label');
-    /** ランダムID */
-    const randomId = getRandomStr();
     checkbox.type = 'checkbox';
-    checkbox.id = 'checkbox-' + randomId;
-    label.htmlFor = 'checkbox-' + randomId;
+    checkbox.id = 'checkbox-' + song._id;
+    label.htmlFor = 'checkbox-' + song._id;
+    //* 初期チェック
+    checkbox.checked = checkedArray.some(n => n._id === song._id);
 
     //* チェックボックスにイベントハンドラを設定
     checkbox.addEventListener('change', (event) => {
       if (event.target.checked) {
         checkedArray.unshift(song);
+        const li = createSongElement(checkedEl, song);
+        song.displayArtwork(li.querySelector('img'));
+        checkedEl.prepend(li);
       } else {
         checkedArray = checkedArray.filter(n => n._id !== song._id);
+        document.getElementById(`song-id-${song._id}`).remove();
       }
     });
     li.append(checkbox, label);
@@ -356,16 +359,20 @@ function createSongElement(song, target) {
 
     //* ダブルクリックでその曲を再生するイベントハンドラを設定
     li.addEventListener('dblclick', () => dblclickToPlay(li, song.index));
+  } else if (target === checkedEl) {
+    //* クリックすると選択済から削除するイベントを追加
+    li.id = 'song-id-' + song._id;
+    li.addEventListener('click', () => {
+      li.remove();
+      const tSong = candidateEl.querySelector(`#checkbox-${song._id}`);
+      if (tSong) tSong.checked = false;
+      checkedArray = checkedArray.filter(n => n._id !== song._id);
+    });
   }
 
   artwork.prepend(img);
   li.append(artwork, title, artist);
   return li;
-}
-
-/** ランダムな文字列を生成するメソッド */
-function getRandomStr() {
-  return new Date().getTime().toString(16) + Math.floor(10000 * Math.random()).toString(16);
 }
 
 /**
@@ -406,7 +413,7 @@ function setArrayToList(target, array) {
   const addList = [];
   //* 曲ごとにli要素を作成、データ挿入
   for (let i = 0, len = array.length; i < len; i++) {
-    const elem = createSongElement(array[i], target);
+    const elem = createSongElement(target, array[i]);
 
     //* 表示された時にアートワークを読み込むイベントハンドラを設定
     delayLoad(target, elem, /** @param {HTMLElement} el */ function(el) {
@@ -461,7 +468,7 @@ function movePlayingClass() {
 
 /**
  * 曲の検索（空白区切のAND検索、[曲名, アーティスト名, アルバム名]）
- * @return {Song[]} 
+ * @return {Promise<Song[]>} 
  */
 async function searchSongs(text) {
   //* キーワードを空白で区切る
@@ -990,4 +997,11 @@ const imageEl = document.getElementById('image');
 const imageTestEl = document.getElementById('image-test');
 imageTestEl.addEventListener('click', () => {
   playingSong().displayArtwork(imageEl);
+});
+
+searchEl.addEventListener('change', async (event) => {
+  const keyword = event.target.value;
+  const songs = await searchSongs(keyword);
+  console.log(songs);
+  setArrayToList(candidateEl, songs);
 });

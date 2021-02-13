@@ -23,7 +23,7 @@ body {
   height: 100px;
   padding: 0 16px;
   background-color: black;
-  z-index: 100;
+  z-index: 3;
   -webkit-app-region: drag;
 }
 
@@ -405,9 +405,9 @@ body {
   top: 100px;
   left: 0;
   width: 75%;
-  height: 20px;
+  height: 38px;
   margin: 0 auto;
-  padding: 6px 12.5% 12px;
+  padding: 0 12.5%;
   -webkit-box-pack: center;
       -ms-flex-pack: center;
           justify-content: center;
@@ -415,13 +415,13 @@ body {
   color: white;
   background-color: black;
   border-radius: 5px;
-  z-index: 100;
+  z-index: 3;
 }
 
 .tabs__wrapper label {
   display: inline-block;
-  width: 50%;
-  height: 100%;
+  width: 100%;
+  margin: 6px 0 12px;
   padding-top: 1px;
   text-align: center;
   background-color: gray;
@@ -455,6 +455,39 @@ body {
   background-color: #1462d6;
 }
 
+.tabs__search {
+  display: none;
+  position: fixed;
+  top: 138px;
+  left: 0;
+  width: 75%;
+  height: 45px;
+  padding: 0 12.5%;
+  text-align: center;
+  background-color: black;
+  z-index: 3;
+}
+
+.tabs__search label {
+  display: block;
+  margin: 6px 0  12px;
+}
+
+.tabs__search input {
+  width: calc(100% - 20px);
+  height: 20px;
+  padding: 3px 10px;
+  background-color: #333;
+  border: none;
+  outline: none;
+  border-radius: 3px;
+  color: white;
+}
+
+#candidate-radio:checked ~ .tabs__search {
+  display: block;
+}
+
 .tabs__content {
   display: none;
   width: auto;
@@ -468,8 +501,8 @@ body {
 }
 
 .tabs__content.lyrics {
-  height: calc(100vh - calc(100px + 20px + 6px + 12px) - calc((100vh - calc(100px + 20px + 6px + 12px)) / 2));
-  padding: calc(100px + 20px + 6px + 12px) 20px calc((100vh - calc(100px + 20px + 6px + 12px)) / 2);
+  height: calc(100vh - calc(100px + 38px) - calc((100vh - calc(100px + 38px)) / 2));
+  padding: calc(100px + 38px) 20px calc((100vh - calc(100px + 38px)) / 2);
 }
 
 .tabs__content.lyrics li {
@@ -510,8 +543,8 @@ body {
 }
 
 .tabs__content.song-array {
-  height: calc(100vh - calc(100px + 20px + 6px + 12px) - 12px);
-  padding: calc(100px + 20px + 6px + 12px) 20px 12px;
+  height: calc(100vh - calc(100px + 38px) - 12px);
+  padding: calc(100px + 38px) 20px 12px;
   text-align: left;
 }
 
@@ -643,6 +676,11 @@ body {
   background-color: #444;
 }
 
+.tabs__content.song-array#candidate {
+  height: calc(100vh - calc(100px + 38px) - 45px - 12px);
+  padding: calc(calc(100px + 38px) + 45px) 20px 12px;
+}
+
 #play-array-radio:checked ~ .tabs__content#play-array,
 #lyrics-radio:checked ~ .tabs__content#lyrics,
 #candidate-radio:checked ~ .tabs__content#candidate,
@@ -661,7 +699,7 @@ body {
   bottom: 10px;
   right: 10px;
   background-color: #2c2c2c;
-  z-index: 100;
+  z-index: 2;
   opacity: 0.4;
   -webkit-transition: .5s;
   transition: .5s;

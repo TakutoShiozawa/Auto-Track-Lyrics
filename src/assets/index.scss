@@ -5,12 +5,18 @@ $large-button-size: 60px;
 $small-button-size: 30px;
 $player-height: 60px;
 $player-padding-x: 8px;
-$tabs-height: 20px;
+$tabs-height: 38px;
 $tabs-padding-top: 6px;
 $tabs-padding-bottom: 12px;
-$content-padding-top: calc(#{$header-height} + #{$tabs-height} + #{$tabs-padding-top} + #{$tabs-padding-bottom});
-$content-padding-buttom: calc((100vh - #{$content-padding-top}) / 2);
+$search-height: 45px;
+$content-padding-top: calc(#{$header-height} + #{$tabs-height});
+$content-padding-bottom: calc((100vh - #{$content-padding-top}) / 2);
 $content-padding-x: 20px;
+
+$z-index: (
+  headers: 3,
+  autoButton: 2,
+);
 
 //* Mixin
 @mixin large-button() {
@@ -82,7 +88,7 @@ body {
   height: $header-height;
   padding: 0 $header-padding-x;
   background-color: black;
-  z-index: 100;
+  z-index: map-get($z-index, headers);
   //* ドラッグでウィンドウを動かす
   -webkit-app-region: drag;
   & input,
@@ -326,17 +332,17 @@ body {
     width: 75%;
     height: $tabs-height;
     margin: 0 auto;
-    padding: $tabs-padding-top 12.5% $tabs-padding-bottom;
+    padding: 0 12.5%;
     justify-content: center;
     font-size: 0.75rem;
     color: white;
     background-color: black;
     border-radius: 5px;
-    z-index: 100;
+    z-index: map-get($z-index, headers);
     & label {
       display: inline-block;
-      width: 50%;
-      height: 100%;
+      width: 100%;
+      margin: $tabs-padding-top 0 $tabs-padding-bottom;
       padding-top: 1px;
       text-align: center;
       background-color: gray;
@@ -365,6 +371,35 @@ body {
       background-color: #1462d6;
     }
   }
+  &__search {
+    display: none;
+    position: fixed;
+    top: $header-height + $tabs-height;
+    left: 0;
+    width: 75%;
+    height: $search-height;
+    padding: 0 12.5%;
+    text-align: center;
+    background-color: black;
+    z-index: map-get($z-index, headers);
+    & label {
+      display: block;
+      margin: 6px 0  12px;
+    }
+    & input {
+      width: calc(100% - 20px);
+      height: 20px;
+      padding: 3px 10px;
+      background-color: #333;
+      border: none;
+      outline: none;
+      border-radius: 3px;
+      color: white;
+    }
+    #candidate-radio:checked ~ & {
+      display: block;
+    }
+  }
   &__content {
     display: none;
     width: auto;
@@ -376,8 +411,8 @@ body {
     }
     //* 歌詞
     &.lyrics {
-      height: calc(100vh - #{$content-padding-top} - #{$content-padding-buttom});
-      padding: $content-padding-top $content-padding-x $content-padding-buttom;
+      height: calc(100vh - #{$content-padding-top} - #{$content-padding-bottom});
+      padding: $content-padding-top $content-padding-x $content-padding-bottom;
       & li {
         color:#a8a8a8;
         min-height: 1rem;
@@ -504,6 +539,10 @@ body {
           background-color: #444;
         }
       }
+      &#candidate {
+        height: calc(100vh - #{$content-padding-top} - #{$search-height} - 12px);
+        padding: calc(#{$content-padding-top} + #{$search-height}) $content-padding-x 12px;
+      }
     }
     //* 選択しているタブのコンテンツを表示
     #play-array-radio:checked ~ &#play-array,
@@ -522,7 +561,7 @@ body {
   bottom: 10px;
   right: 10px;
   background-color: #2c2c2c;
-  z-index: 100;
+  z-index: map-get($z-index, autoButton);
   opacity: 0.4;
   @include hover-fade();
   &:hover {

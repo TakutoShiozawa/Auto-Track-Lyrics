@@ -92,7 +92,7 @@ body {
 }
 
 .toggle-icon input[type="checkbox"]:checked ~ i {
-  color: #227afd;
+  color: #1367e6;
 }
 
 .progress {
@@ -452,10 +452,10 @@ body {
 #lyrics-radio:checked ~ .tabs__wrapper #lyrics-label,
 #candidate-radio:checked ~ .tabs__wrapper #candidate-label,
 #checked-radio:checked ~ .tabs__wrapper #checked-label {
-  background-color: #1462d6;
+  background-color: #1367e6;
 }
 
-.tabs__search {
+.tabs__option {
   display: none;
   position: fixed;
   top: 138px;
@@ -468,12 +468,12 @@ body {
   z-index: 3;
 }
 
-.tabs__search label {
-  display: block;
+.tabs__optionCnt {
+  display: none;
   margin: 6px 0  12px;
 }
 
-.tabs__search input {
+.tabs__optionCnt input {
   width: calc(100% - 20px);
   height: 20px;
   padding: 3px 10px;
@@ -484,8 +484,30 @@ body {
   color: white;
 }
 
-#candidate-radio:checked ~ .tabs__search {
+.tabs__optionCnt button {
+  border: none;
+  font-weight: bold;
+  color: #1367e6;
+  background-color: transparent;
+}
+
+.tabs__optionCnt button:hover {
+  color: #2575ed;
+}
+
+#candidate-radio:checked ~ .tabs__option,
+#checked-radio:checked ~ .tabs__option {
   display: block;
+}
+
+#candidate-radio:checked ~ .tabs__option .tabs__optionCnt:nth-child(1),
+#checked-radio:checked ~ .tabs__option .tabs__optionCnt:nth-child(2) {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
 }
 
 .tabs__content {
@@ -676,7 +698,7 @@ body {
   background-color: #444;
 }
 
-.tabs__content.song-array#candidate {
+.tabs__content.song-array#candidate, .tabs__content.song-array#checked {
   height: calc(100vh - calc(100px + 38px) - 45px - 12px);
   padding: calc(calc(100px + 38px) + 45px) 20px 12px;
 }
@@ -765,6 +787,39 @@ body {
   }
 }
 
+.playlist__item {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  height: 40px;
+  padding: 0 6px;
+  border-bottom: solid 1px white;
+}
+
+.playlist__item i {
+  margin-right: 12px;
+}
+
+.playlist__item:hover {
+  background-color: #444;
+}
+
+.playlist__name {
+  margin-right: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.playlist__count {
+  min-width: 40px;
+  font-size: 0.8rem;
+  text-align: end;
+}
+
 .snap-drawers {
   display: none;
   margin-top: 100px;
@@ -785,5 +840,9 @@ ul {
   list-style-type: none;
   margin: 0;
   padding: 0;
+}
+
+button {
+  outline: none;
 }
 /*# sourceMappingURL=index.css.map */

@@ -12,6 +12,7 @@ $search-height: 45px;
 $content-padding-top: calc(#{$header-height} + #{$tabs-height});
 $content-padding-bottom: calc((100vh - #{$content-padding-top}) / 2);
 $content-padding-x: 20px;
+$button-blue: #1367e6;
 
 $z-index: (
   headers: 3,
@@ -135,7 +136,7 @@ body {
       transform: translate3d(-50%, -50%, 0);
     }
     &:checked ~ i {
-      color: #227afd;
+      color: $button-blue;
     }
   }
 }
@@ -368,10 +369,10 @@ body {
     #lyrics-radio:checked ~ & #lyrics-label,
     #candidate-radio:checked ~ & #candidate-label,
     #checked-radio:checked ~ & #checked-label {
-      background-color: #1462d6;
+      background-color: $button-blue;
     }
   }
-  &__search {
+  &__option {
     display: none;
     position: fixed;
     top: $header-height + $tabs-height;
@@ -382,22 +383,37 @@ body {
     text-align: center;
     background-color: black;
     z-index: map-get($z-index, headers);
-    & label {
-      display: block;
+    &Cnt {
+      display: none;
       margin: 6px 0  12px;
+      & input {
+        width: calc(100% - 20px);
+        height: 20px;
+        padding: 3px 10px;
+        background-color: #333;
+        border: none;
+        outline: none;
+        border-radius: 3px;
+        color: white;
+      }
+      & button {
+        border: none;
+        font-weight: bold;
+        color: $button-blue;
+        background-color: transparent;
+        &:hover {
+          color: lighten($button-blue, 5%);
+        }
+      }
     }
-    & input {
-      width: calc(100% - 20px);
-      height: 20px;
-      padding: 3px 10px;
-      background-color: #333;
-      border: none;
-      outline: none;
-      border-radius: 3px;
-      color: white;
-    }
-    #candidate-radio:checked ~ & {
+    #candidate-radio:checked ~ &,
+    #checked-radio:checked ~ & {
       display: block;
+    }
+    #candidate-radio:checked ~ & &Cnt:nth-child(1),
+    #checked-radio:checked ~ & &Cnt:nth-child(2) {
+      display: flex;
+      justify-content: space-between;
     }
   }
   &__content {
@@ -539,7 +555,8 @@ body {
           background-color: #444;
         }
       }
-      &#candidate {
+      &#candidate,
+      &#checked {
         height: calc(100vh - #{$content-padding-top} - #{$search-height} - 12px);
         padding: calc(#{$content-padding-top} + #{$search-height}) $content-padding-x 12px;
       }
@@ -581,6 +598,32 @@ body {
   }
 }
 
+.playlist {
+  &__item {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 6px;
+    border-bottom: solid 1px white;
+    & i {
+      margin-right: 12px;
+    }
+    &:hover {
+      background-color: #444;
+    }
+  }
+  &__name {
+    margin-right: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  &__count {
+    min-width: 40px;
+    font-size: 0.8rem;
+    text-align: end;
+  }
+}
 
 //* snap.js
 .snap-drawers {
@@ -603,4 +646,8 @@ ul {
   list-style-type: none;
   margin:0;
   padding:0;
+}
+
+button {
+  outline: none;
 }

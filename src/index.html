@@ -61,8 +61,8 @@
     </div>
     <div id="snap" class="snap-content tabs">
       <input id="play-array-radio" type="radio" name="tabs">
-      <input id="lyrics-radio" type="radio" name="tabs">
-      <!-- <input id="lyrics-radio" type="radio" name="tabs" checked> -->
+      <!-- <input id="lyrics-radio" type="radio" name="tabs"> -->
+      <input id="lyrics-radio" type="radio" name="tabs" checked>
       <div class="tabs__wrapper main">
         <label id="play-array-label" for="play-array-radio">
           <i class="icon-playlist"></i>再生リスト
@@ -72,8 +72,8 @@
         </label>
       </div>
       <input id="candidate-radio" type="radio" name="tabs">
-      <!-- <input id="checked-radio" type="radio" name="tabs"> -->
-      <input id="checked-radio" type="radio" name="tabs" checked>
+      <input id="checked-radio" type="radio" name="tabs">
+      <!-- <input id="checked-radio" type="radio" name="tabs" checked> -->
       <div class="tabs__wrapper register">
         <label id="candidate-label" for="candidate-radio">
           <i class="icon-menu"></i>候補リスト
@@ -82,10 +82,14 @@
           <i class="icon-check"></i>選択済み
         </label>
       </div>
-      <div class="tabs__search">
-        <label>
+      <div class="tabs__option">
+        <div class="tabs__optionCnt">
           <input id="search" placeholder="曲を検索">
-        </label>
+        </div>
+        <div class="tabs__optionCnt">
+          <button id="cancel-edit">キャンセル</button>
+          <button id="complete-edit">完了</button>
+        </div>
       </div>
       <ul id="play-array" class="tabs__content song-array">
         <!-- <li class="playing">
@@ -110,7 +114,18 @@
       <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
     </div>
     <div id="left-menu" class="snap-drawers left">
-      <input id="update-music" type="file" accept="audio/*" webkitdirectory>
+      <!-- <input id="update-music" type="file" accept="audio/*" webkitdirectory> -->
+      <ul id="playlists" class="playlist">
+        <li id="new-playlist" class="playlist__item">
+          <div class="playlist__name">プレイリスト追加...</div>
+          <div class="playlist__count"><i class="icon-plus"></i></div>
+        </li>
+      </ul>
+      <dialog id="dialog">
+        <input id="dialog-input">
+        <button id="dialog-cancel">キャンセル</button>
+        <button id="dialog-submit">決定</button>
+      </dialog>
     </div>
     <div id="right-menu" class="snap-drawers right">
       <button id="image-test">テスト</button>

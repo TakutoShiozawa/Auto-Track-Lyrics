@@ -22,7 +22,7 @@ class Song {
     this._timeTable = timeTable;
   }
 
-  //* Getter
+  //* Getter関数
   get title() { return this._title; }
   get artist() { return this._artist; }
   get album() { return this._album; }
@@ -62,7 +62,7 @@ class Song {
     return lyricsText ? lyricsText.split(/\r\n|\n|\r/) : [];
   }
 
-  //* Setter的メソッド
+  //* Setter的関数
   /** `Song`クラスのSetter関数 */
   async updateSongData(payload) {
     //* アップデートを許可するキー
@@ -87,10 +87,77 @@ class Song {
 
 /** プレイリストクラス */
 class Playlist {
-  songs = [];
-  constructor(name, songs) {
-    this.name = name;
-    this.songs = songs;
+  songIds = [];
+  constructor({ _id, name, songIds }) {
+    /** @type {string} */
+    this._id = _id;
+    /** @type {string} */
+    this._name = name;
+    /** @type {string[]} */
+    this._songIds = songIds;
+    /** @type {Song[]} */
+    this._songs = [];
+  }
+
+  //* Getter関数
+  get name() { return this._name; }
+  get count() { return this._songs.length || this._songIds.length; }
+  //* Getter的関数
+  async songs() {
+    if (!this._songs || !this._songs.length) {
+      await this.fetchSongsByIds(this._songIds);
+    }
+    return this._songs;
+  }
+  
+  /**
+   * IDから曲の情報を取得するメソッド
+   * @param {string[]} ids 曲IDの配列
+   * @return {Promise<void>}
+   */
+  async fetchSongsByIds(ids) {
+    if (!ids || !ids.length) return [];
+    const songDB = new AsyncNedb({
+      filename: Path.join(__dirname, 'db/songs.db'),
+      autoload: true,
+    });
+    const foundSongs = await songDB.asyncFind({ _id: { $in: ids } });
+    this._songs = this._songIds.map(id => {
+      const song = foundSongs.find(s => s._id === id);
+      return song && new Song(song);
+    });
+  }
+
+  //* Setter的関数
+  /** `Playlist`クラスのSetter関数 */
+  async updatePlaylistData(payload) {
+    //* アップデートを許可するキー
+    const allowedKeys = ['name', 'songIds', 'latestPlayedAt'];
+    Object.keys(payload).forEach(key => {
+      //* キーが許可されてない時、削除
+      if (allowedKeys.indexOf(key) === -1) {
+        delete payload[key];
+        return;
+      }
+      this[`_${key}`] = payload[key];
+    });
+    payload.updatedAt = new Date();
+
+    //* 曲情報データベースを取得
+    const db = new AsyncNedb({
+      filename: Path.join(__dirname, 'db/playlists.db'),
+      autoload: true,
+    });
+    await db.asyncUpdate({ _id: this._id }, { $set: payload });
+  }
+
+  /** プレイリストの順番を入れ替える関数 */
+  async changeListOrder(payload) {
+    if (!Array.isArray(payload)) return;
+
+    this._songs = payload;
+    const songIds = payload.map(song => song._id);
+    await this.updatePlaylistData({ songIds });
   }
 }
 //! -----------------------------
@@ -129,10 +196,17 @@ const candidateEl   = document.getElementById('candidate');
 const checkedEl     = document.getElementById('checked');
 const autoEl        = document.getElementById('auto');
 const audioEl       = document.getElementById('audio');
-const updateMusicEl = document.getElementById('update-music');
+// const updateMusicEl = document.getElementById('update-music');
 const searchEl      = document.getElementById('search');
 const leftMenuEl    = document.getElementById('left-menu');
 const rightMenuEl   = document.getElementById('right-menu');
+const newPlaylistEl = document.getElementById('new-playlist');
+const playlistsEl   = document.getElementById('playlists');
+/** @type {HTMLDialogElement} */
+const dialogEl      = document.getElementById('dialog');
+const dlgInputEl    = document.getElementById('dialog-input');
+const dlgCancelEl   = document.getElementById('dialog-cancel');
+const dlgSubmitEl   = document.getElementById('dialog-submit');
 
 /** 曲の長さ */
 let duration = 300;
@@ -148,6 +222,8 @@ let shuffledPlayArray = [];
 let candidateArray = [];
 /** @type {Array<Song>} シャッフルされた再生リスト */
 let checkedArray = [];
+/** @type {Playlist[]} プレイリスト一覧 */
+let playlistArray = [];
 /** 再生リスト中の現在位置 */
 let playingIndex = 0;
 /** 再生状態 */
@@ -768,6 +844,56 @@ function completedFunction(func) {
   };
 }
 
+/** プレイリストを表示させるメソッド */
+function setPlaylistsToList() {
+  const addList = [];
+  for (let i = 0, len = playlistArray.length; i < len; i++) {
+    const item = createPlaylistElement(playlistArray[i]);
+    addList.push(item);
+  }
+  playlistsEl.append(...addList);
+}
+
+/**
+ * プレイリスト要素を作成するメソッド
+ * @param {Playlist} playlist `Playlist`オブジェクト
+ * @return {HTMLLIElement} プレイリスト要素
+ */
+function createPlaylistElement(playlist) {
+  const item = document.createElement('li');
+  item.className = 'playlist__item';
+  const icon1 = document.createElement('i');
+  icon1.className = 'icon-pencil';
+  const icon2 = document.createElement('i');
+  icon2.className = 'icon-control-play';
+  const name = document.createElement('div');
+  name.className = 'playlist__name';
+  name.textContent = playlist.name;
+  const count = document.createElement('div');
+  count.className = 'playlist__count';
+  count.textContent = `${playlist.count}曲`;
+
+  icon1.addEventListener('click', () => editPlaylistName(name, playlist));
+  item.append(icon1, icon2, name, count);
+  return item;
+}
+
+/**
+ * プレイリストの名称を変更するイベントを付加するメソッド
+ * @param {HTMLElement} nameEl プレイリストの名前要素
+ */
+function editPlaylistName(nameEl, playlist) {
+  dlgInputEl.value = nameEl.textContent;
+  dialogEl.showModal();
+  dlgCancelEl.addEventListener('click', () => dialogEl.close(), { once: true });
+  dlgSubmitEl.addEventListener('click', async () => {
+    nameEl.textContent = dlgInputEl.value;
+    await playlist.updatePlaylistData({ name: dlgInputEl.value });
+    dialogEl.close();
+    dlgInputEl.value = "";
+  }, { once: true });
+}
+
 //* アプリ読み込み時に
 window.onload = async () => {
   //* フォントカラーの選択オプションを追加
@@ -798,6 +924,14 @@ window.onload = async () => {
   //TODO ------------------------------------------
   //TODO ------------------------------------------
   //TODO: ここまで
+
+  const playlistDB = new AsyncNedb({
+    filename: Path.join(__dirname, 'db/playlists.db'),
+    autoload: true,
+  });
+  const playlists = await playlistDB.asyncFind({});
+  playlistArray = playlists.map(playlist => new Playlist(playlist));
+  setPlaylistsToList();
 };
 
 //* デフォルトのキーイベントを設定
@@ -883,7 +1017,7 @@ progressEl.addEventListener('change', () => {
 });
 
 //* 曲情報をアップデート
-updateMusicEl.addEventListener('input', updateSongList);
+// updateMusicEl.addEventListener('input', updateSongList);
 
 //* 曲の検索
 // searchEl.addEventListener('click', searchSongs);
@@ -999,9 +1133,22 @@ imageTestEl.addEventListener('click', () => {
   playingSong().displayArtwork(imageEl);
 });
 
+//* 曲の検索機能
 searchEl.addEventListener('change', async (event) => {
   const keyword = event.target.value;
   const songs = await searchSongs(keyword);
-  console.log(songs);
   setArrayToList(candidateEl, songs);
+});
+
+//* 新規プレイリスト追加ボタンが押された時
+newPlaylistEl.addEventListener('click', async () => {
+  const playlistDB = new AsyncNedb({
+    filename: Path.join(__dirname, 'db/playlists.db'),
+    autoload: true,
+  });
+  const newPlaylist = await playlistDB.asyncInsert({ name: '新規プレイリスト', songIds: [], updatedAt: new Date() });
+  const playlist = new Playlist(newPlaylist)
+  const item = createPlaylistElement(playlist);
+  playlistsEl.append(item);
+  editPlaylistName(item.querySelector('.playlist__name'), playlist);
 });

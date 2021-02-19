@@ -108,7 +108,15 @@
         </li> -->
       </ul>
       <ul id="lyrics" class="tabs__content lyrics"></ul>
-      <ul id="candidate" class="tabs__content song-array"></ul>
+      <ul id="candidate" class="tabs__content song-array">
+        <div class="pagination">
+          <button id="p-prev" disabled><i class="icon-arrow-left"></i></button>
+          <div class="pagination__number">
+            <span id="current-page">-</span>/<span id="total-page">-</span>
+          </div>
+          <button id="p-next" disabled><i class="icon-arrow-right"></i></button>
+        </div>
+      </ul>
       <ul id="checked" class="tabs__content song-array"></ul>
       <audio id="audio" type="audio/mpeg"></audio>
       <button id="auto" class="display-none"><i class="icon-mouse"></i></button>

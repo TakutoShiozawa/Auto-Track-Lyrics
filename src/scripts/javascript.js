@@ -152,7 +152,7 @@ class Playlist {
   }
 
   /** プレイリストの順番を入れ替える関数 */
-  async changeListOrder(payload) {
+  async changeSongList(payload) {
     if (!Array.isArray(payload)) return;
 
     this._songs = payload;
@@ -172,36 +172,54 @@ const HEADER_HEIGHT = 100;
 const TABS_HEIGHT = 38;
 /** ウィンドウの歌詞が見える最小の高さ */
 const MINIMUM_SIZE_FOR_LYRICS = 196;
-//* HTML要素
+
+//* ボタン
 const closeEl       = document.getElementById('close');
-const shuffleEl     = document.getElementById('shuffle');
-const repeatEl      = document.getElementById('repeat');
-const positionEl    = document.getElementById('position');
-const progressEl    = document.getElementById('progress');
-const durationEl    = document.getElementById('duration');
-const titleEl       = document.getElementById('title');
-const artistEl      = document.getElementById('artist');
-const recordEl      = document.getElementById('record');
 const prevEl        = document.getElementById('prev');
 const playEl        = document.getElementById('play');
 const nextEl        = document.getElementById('next');
+const cancelEditEl  = document.getElementById('cancel-edit');
+const compEditEl    = document.getElementById('complete-edit');
+const prevPageEl    = document.getElementById('p-prev');
+const nextPageEl    = document.getElementById('p-next');
+const autoEl        = document.getElementById('auto');
+//* Input要素
+const shuffleEl     = document.getElementById('shuffle');
+const repeatEl      = document.getElementById('repeat');
+const progressEl    = document.getElementById('progress');
+const recordEl      = document.getElementById('record');
 const volumeEl      = document.getElementById('volume');
-const volumeIconEl  = document.getElementById('volume-icon');
+const searchEl      = document.getElementById('search');
+//* タブ
+const radioChecked  = document.getElementById('checked-radio');
+const radioCndd     = document.getElementById('candidate-radio');
+const radioPlayArr  = document.getElementById('play-array-radio');
+const radioLyrics   = document.getElementById('lyrics-radio');
+//* その他特殊
 const colorEl       = document.getElementById('color');
 const colorSelectEl = document.getElementsByClassName('color-select')[0];
-const snapEl        = document.getElementById('snap');
+const audioEl       = document.getElementById('audio');
+// const updateMusicEl = document.getElementById('update-music');
+//* テキスト
+const positionEl    = document.getElementById('position');
+const durationEl    = document.getElementById('duration');
+const titleEl       = document.getElementById('title');
+const artistEl      = document.getElementById('artist');
+const currentPageEl = document.getElementById('current-page');
+const totalPageEl   = document.getElementById('total-page');
+//* リスト
 const playArrayEl   = document.getElementById('play-array');
 const lyricsEl      = document.getElementById('lyrics');
 const candidateEl   = document.getElementById('candidate');
 const checkedEl     = document.getElementById('checked');
-const autoEl        = document.getElementById('auto');
-const audioEl       = document.getElementById('audio');
-// const updateMusicEl = document.getElementById('update-music');
-const searchEl      = document.getElementById('search');
+const playlistsEl   = document.getElementById('playlists');
+const newPlaylistEl = document.getElementById('new-playlist');
+//* その他
+const volumeIconEl  = document.getElementById('volume-icon');
+const snapEl        = document.getElementById('snap');
 const leftMenuEl    = document.getElementById('left-menu');
 const rightMenuEl   = document.getElementById('right-menu');
-const newPlaylistEl = document.getElementById('new-playlist');
-const playlistsEl   = document.getElementById('playlists');
+//* ダイアログ
 /** @type {HTMLDialogElement} */
 const dialogEl      = document.getElementById('dialog');
 const dlgInputEl    = document.getElementById('dialog-input');
@@ -218,14 +236,14 @@ let currentTime = 0;
 let playArray = [];
 /** @type {Array<Song>} シャッフルされた再生リスト */
 let shuffledPlayArray = [];
-/** @type {Array<Song>} 検索候補リスト */
-let candidateArray = [];
-/** @type {Array<Song>} シャッフルされた再生リスト */
+/** @type {Array<Song>} 選択された再生リスト */
 let checkedArray = [];
 /** @type {Playlist[]} プレイリスト一覧 */
 let playlistArray = [];
 /** 再生リスト中の現在位置 */
 let playingIndex = 0;
+/** 再生中のプレイリストのインデックス */
+let playingPlaylist;
 /** 再生状態 */
 let playerState = 'stop';
 /** @type {Array<number>} タイムテーブルの時間表（配列） */
@@ -261,7 +279,7 @@ function playingArray() {
  */ 
 function playingSong() {
   return playingArray()[playingIndex];
-}  
+}
 
 /** ボリュームを上げる */
 function volumeUp() {
@@ -470,7 +488,7 @@ async function setPlayArray() {
   playingIndex = 0;
   //* 適当に曲を取ってきて再生リストに格納・再生
   //TODO: 再生リストの取得方法を決定する
-  // playArray = await searchSongs(searchWord);
+  // playArray = await playlistArray[0].songs();
   //* シャッフルしたリストを同時に作成
   shufflePlayArray(true);
   //* 再生リストを表示させる
@@ -497,14 +515,14 @@ function setArrayToList(target, array) {
       array[i].displayArtwork(imgEl);
     });
     //* 再生中の曲に "playing" classを追加
-    if (i === playingIndex) elem.classList.add('playing');
+    if (target === playArrayEl && i === playingIndex) elem.classList.add('playing');
     addList.push(elem);
   }
   //* リスト既存のリストを削除してから追加する
-  while (target.firstChild) {
+  while (target.firstChild && target.firstChild.nodeName === 'LI') {
     target.removeChild(target.firstChild);
   }
-  target.append(...addList);
+  target.prepend(...addList);
 }
 
 /**
@@ -542,37 +560,26 @@ function movePlayingClass() {
   playArrayEl.children[playingIndex].classList.add('playing');
 }
 
+const perPage = 30;
 /**
  * 曲の検索（空白区切のAND検索、[曲名, アーティスト名, アルバム名]）
+ * @param {AsyncNedb<any>} db 曲データベース
+ * @param {string} text 検索文字列
+ * @param {number} page 検索するページ
  * @return {Promise<Song[]>} 
  */
-async function searchSongs(text) {
-  //* キーワードを空白で区切る
-  // const words = keywordEl.value.split(/[ 　]/);
-  const words = text.split(/[ 　]/);
-  if (words.length === 0) return;
+async function searchSongs(db, text, page) {
+  const option = [['sort', { title: 1 }], ['limit', perPage], ['skip', perPage * (page - 1)]];
 
-  //* キーワードから曲を検索
-  //* 曲情報データベースを取得
-  const songDB = new AsyncNedb({
-    filename: Path.join(__dirname, 'db/songs.db'),
-    autoload: true,
-  });
+  if (text === '') {
+    const all = await db.asyncFind({}, option);
+    return all.map(n => new Song(n));
+  };
 
   //* キーワード毎に正規表現（部分一致）化する
-  const regs = words.map(word => new RegExp(word, 'i'));
-  //* 検索カラム
-  const songColumn = ['title', 'artist', 'album'];
-  //* 検索ワードに対してAND検索、カラムに対してOR検索
-  const andQuery = regs.map(regex => {
-    const orQuery = songColumn.map(col => ({ [col]: regex }));
-    return { $or: orQuery };
-  });
+  const query = createSearchQuery(text);
   //* データベース内をクエリに従って検索・表示
-  const songs = await songDB.asyncFind({ $and: andQuery });
-  if (!songs.length) return;
-
-  // const songIds = songs.map(song => song._id);
+  const songs = await db.asyncFind(query, option);
 
   //* 検索された曲を含むプレイリストを検索
   //* プレイリストデータベースを取得
@@ -584,8 +591,69 @@ async function searchSongs(text) {
   //* 曲IDを含むプレイリストを取得
   // const playlists = await playlistDB.asyncFind({ songs: { $elemMatch: { _id: { $in: songIds } } } });
   // console.log(playlists);
-  const songCls = songs.map(song => new Song(song));
-  return songCls;
+  return songs.map(n => new Song(n));
+}
+
+/**
+ * 曲検索結果の総ページ数を返すメソッド
+ * @param {AsyncNedb<any>} db 曲データベース
+ * @param {string} text 検索文字列
+ * @return {Promise<number>} 検索結果の総ページ数
+ */
+async function searchtSongsCount(db, text) {
+  if (text === '') {
+    const count = await db.asyncCount({});
+    return Math.ceil(count / perPage);
+  };
+
+  //* キーワード毎に正規表現（部分一致）化する
+  const query = createSearchQuery(text);
+  //* データベース内をクエリに従って検索・表示
+  const total = await db.asyncCount(query);
+  return Math.ceil(total / perPage);
+}
+
+/**
+ * 検索文字列からNeDBのクエリに整形するメソッド
+ * @param {string} text 検索文字列
+ * @return {any} NeDBで取得したいクエリオブジェクト
+ */
+function createSearchQuery(text) {
+  const words = text.split(/[ 　]/);
+  //* キーワード毎に正規表現（部分一致）化する
+  const regs = words.filter(word => word !== '').map(word => new RegExp(word, 'i'));
+  //* 検索カラム
+  const songColumn = ['title', 'artist', 'album'];
+  //* 検索ワードに対してAND検索、カラムに対してOR検索
+  const andQuery = regs.map(regex => {
+    const orQuery = songColumn.map(col => ({ [col]: regex }));
+    return { $or: orQuery };
+  });
+  return { $and: andQuery };
+}
+
+/**
+ * 検索周りをまとめたメソッド。初期検索にも、ページネーションでも使用
+ * @param {number} direction 検索したいページのEnum `[-1, 0, 1]`
+ * @param {AsyncNedb<any>} songDB 曲データベース
+ * @param {text} keyword 検索文字列
+ * @return {Promise<void>}
+ */
+async function searchPagination(direction, songDB, keyword) {
+  //* 一番上にスクロールを戻す
+  candidateEl.scroll({ top: 0 });
+  //* 検索したいページ
+  const page = direction ? Number(currentPageEl.textContent) + direction : 1;
+  //* 総ページ数
+  const totalPage = Number(totalPageEl.textContent);
+  //* 現在ページ： 総ページ数が "0" の時に "0"にする
+  currentPageEl.textContent = Math.min(page, totalPage);
+  //* 「前ページ」「次ページ」の有効化の判定
+  prevPageEl.disabled = page === 1;
+  nextPageEl.disabled = page >= Number(totalPage);
+  //* キーワード検索でページネーション
+  const songs = await searchSongs(songDB, keyword, page);
+  setArrayToList(candidateEl, songs);
 }
 
 /**
@@ -873,7 +941,28 @@ function createPlaylistElement(playlist) {
   count.className = 'playlist__count';
   count.textContent = `${playlist.count}曲`;
 
-  icon1.addEventListener('click', () => editPlaylistName(name, playlist));
+  //* 編集ボタンを押した時、名前変更モーダルを表示
+  icon1.addEventListener('click', (event) => {
+    event.stopPropagation();
+    editPlaylistName(playlist, item);
+  });
+  //* 再生ボタンを押した時、プレイリストを再生
+  icon2.addEventListener('click', async (event) => {
+    event.stopPropagation();
+    playArray = await playlist.songs();
+    playingIndex = 0;
+    playingPlaylist = playlist;
+    await setPlayArray();
+    snapper.close();
+  });
+  //* プレイリストを押した時、内容を表示
+  item.addEventListener('click', async () => {
+    radioChecked.checked = true;
+    checkedArray = await playlist.songs();
+    setArrayToList(checkedEl, checkedArray);
+    addPlaylistEditEvent(playlist, item);
+    snapper.close();
+  });
   item.append(icon1, icon2, name, count);
   return item;
 }
@@ -882,7 +971,8 @@ function createPlaylistElement(playlist) {
  * プレイリストの名称を変更するイベントを付加するメソッド
  * @param {HTMLElement} nameEl プレイリストの名前要素
  */
-function editPlaylistName(nameEl, playlist) {
+function editPlaylistName(playlist, element) {
+  const nameEl = element.querySelector('.playlist__name');
   dlgInputEl.value = nameEl.textContent;
   dialogEl.showModal();
   dlgCancelEl.addEventListener('click', () => dialogEl.close(), { once: true });
@@ -891,6 +981,22 @@ function editPlaylistName(nameEl, playlist) {
     await playlist.updatePlaylistData({ name: dlgInputEl.value });
     dialogEl.close();
     dlgInputEl.value = "";
+  }, { once: true });
+}
+
+function addPlaylistEditEvent(playlist, element) {
+  //* プレイリストの編集がキャンセルされた時
+  cancelEditEl.addEventListener('click', () => {
+    checkedArray = [];
+    radioPlayArr.checked = true;
+  }, { once: true });
+
+  //* プレイリストの編集が完了した時
+  compEditEl.addEventListener('click', async () => {
+    await playlist.changeSongList(checkedArray);
+    element.querySelector('.playlist__count').textContent = `${playlist.count}曲`;
+    radioPlayArr.checked = true;
+    checkedArray = [];
   }, { once: true });
 }
 
@@ -912,12 +1018,12 @@ window.onload = async () => {
   //TODO: テスト
   //TODO ------------------------------------------
   //TODO ------------------------------------------
-  const songDB = new AsyncNedb({
-    filename: Path.join(__dirname, 'db/songs.db'),
-    autoload: true,
-  });
-  const songs = await songDB.asyncFind({ timeTable: { $exists: true } }, [['sort', { title: -1 }], ['limit', 100]]);
-  playArray = songs.map(song => new Song(song));
+  // const songDB = new AsyncNedb({
+  //   filename: Path.join(__dirname, 'db/songs.db'),
+  //   autoload: true,
+  // });
+  // const songs = await songDB.asyncFind({ timeTable: { $exists: true } }, [['sort', { title: -1 }], ['limit', 100]]);
+  // playArray = songs.map(song => new Song(song));
   // setArrayToList(playArrayEl, playArray);
   // candidateArray = songs.map(song => new Song(song));
   // setArrayToList(candidateEl, candidateArray);
@@ -1135,9 +1241,18 @@ imageTestEl.addEventListener('click', () => {
 
 //* 曲の検索機能
 searchEl.addEventListener('change', async (event) => {
+  const songDB = new AsyncNedb({
+    filename: Path.join(__dirname, 'db/songs.db'),
+    autoload: true,
+  });
   const keyword = event.target.value;
-  const songs = await searchSongs(keyword);
-  setArrayToList(candidateEl, songs);
+  const totalPages = await searchtSongsCount(songDB, keyword);
+  totalPageEl.textContent = totalPages;
+
+  await searchPagination(0, songDB, keyword);
+
+  prevPageEl.onclick = async () => await searchPagination(-1, songDB, keyword);
+  nextPageEl.onclick = async () => await searchPagination(1, songDB, keyword);
 });
 
 //* 新規プレイリスト追加ボタンが押された時
@@ -1150,5 +1265,5 @@ newPlaylistEl.addEventListener('click', async () => {
   const playlist = new Playlist(newPlaylist)
   const item = createPlaylistElement(playlist);
   playlistsEl.append(item);
-  editPlaylistName(item.querySelector('.playlist__name'), playlist);
+  editPlaylistName(playlist, item);
 });

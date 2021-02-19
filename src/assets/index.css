@@ -66,6 +66,8 @@ body {
   font-size: 1.2rem;
   text-align: center;
   border-radius: 50%;
+  border: none;
+  background-color: black;
   -webkit-transition: .3s;
   transition: .3s;
   position: relative;
@@ -267,6 +269,8 @@ body {
   font-size: 1.2rem;
   text-align: center;
   border-radius: 50%;
+  border: none;
+  background-color: black;
   -webkit-transition: .3s;
   transition: .3s;
 }
@@ -302,6 +306,8 @@ body {
   font-size: 1.2rem;
   text-align: center;
   border-radius: 50%;
+  border: none;
+  background-color: black;
   -webkit-transition: .3s;
   transition: .3s;
   position: relative;
@@ -359,6 +365,8 @@ body {
   font-size: 1.2rem;
   text-align: center;
   border-radius: 50%;
+  border: none;
+  background-color: black;
   -webkit-transition: .3s;
   transition: .3s;
   position: relative;
@@ -710,6 +718,84 @@ body {
   display: block;
 }
 
+@-webkit-keyframes line-scale-pulse-out {
+  0% {
+    -webkit-transform: scaley(1);
+            transform: scaley(1);
+  }
+  50% {
+    -webkit-transform: scaley(0.4);
+            transform: scaley(0.4);
+  }
+  100% {
+    -webkit-transform: scaley(1);
+            transform: scaley(1);
+  }
+}
+
+@keyframes line-scale-pulse-out {
+  0% {
+    -webkit-transform: scaley(1);
+            transform: scaley(1);
+  }
+  50% {
+    -webkit-transform: scaley(0.4);
+            transform: scaley(0.4);
+  }
+  100% {
+    -webkit-transform: scaley(1);
+            transform: scaley(1);
+  }
+}
+
+.pagination {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.pagination > button {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 50%;
+  border: none;
+  background-color: black;
+  -webkit-transition: .3s;
+  transition: .3s;
+  position: relative;
+  color: white;
+}
+
+.pagination > button:hover {
+  background-color: #2c2c2c;
+}
+
+.pagination > button > i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate3d(-50%, -50%, 0);
+          transform: translate3d(-50%, -50%, 0);
+}
+
+.pagination > button:disabled {
+  color: #888;
+  background-color: transparent;
+}
+
+.pagination__number {
+  margin: 0 12px;
+}
+
 #auto {
   position: relative;
   width: 60px;
@@ -755,36 +841,6 @@ body {
 
 #auto:hover {
   opacity: 1;
-}
-
-@-webkit-keyframes line-scale-pulse-out {
-  0% {
-    -webkit-transform: scaley(1);
-            transform: scaley(1);
-  }
-  50% {
-    -webkit-transform: scaley(0.4);
-            transform: scaley(0.4);
-  }
-  100% {
-    -webkit-transform: scaley(1);
-            transform: scaley(1);
-  }
-}
-
-@keyframes line-scale-pulse-out {
-  0% {
-    -webkit-transform: scaley(1);
-            transform: scaley(1);
-  }
-  50% {
-    -webkit-transform: scaley(0.4);
-            transform: scaley(0.4);
-  }
-  100% {
-    -webkit-transform: scaley(1);
-            transform: scaley(1);
-  }
 }
 
 .playlist__item {

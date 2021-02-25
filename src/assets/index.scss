@@ -658,6 +658,7 @@ body {
   .snapjs-right &.right,
   .snapjs-left &.left {
     display: block;
+    overflow-y: scroll;
   }
 }
 

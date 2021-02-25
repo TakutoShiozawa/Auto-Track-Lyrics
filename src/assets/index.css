@@ -884,6 +884,7 @@ body {
 .snapjs-right .snap-drawers.right,
 .snapjs-left .snap-drawers.left {
   display: block;
+  overflow-y: scroll;
 }
 
 body {

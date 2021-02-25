@@ -160,11 +160,6 @@ class Playlist {
     await this.updatePlaylistData({ songIds });
   }
 }
-//! -----------------------------
-//! 再生したい曲のキーワード
-
-const searchWord = 'まふまふ';
-//! -----------------------------
 
 /** ヘッダーの高さ, かつ, 最小ウィンドウサイズ */
 const HEADER_HEIGHT = 100;
@@ -242,8 +237,6 @@ let checkedArray = [];
 let playlistArray = [];
 /** 再生リスト中の現在位置 */
 let playingIndex = 0;
-/** 再生中のプレイリストのインデックス */
-let playingPlaylist;
 /** 再生状態 */
 let playerState = 'stop';
 /** @type {Array<number>} タイムテーブルの時間表（配列） */
@@ -431,7 +424,7 @@ function createSongElement(target, song) {
     //* チェックボックスにイベントハンドラを設定
     checkbox.addEventListener('change', (event) => {
       if (event.target.checked) {
-        checkedArray.unshift(song);
+        checkedArray.push(song);
         const li = createSongElement(checkedEl, song);
         song.displayArtwork(li.querySelector('img'));
         checkedEl.prepend(li);
@@ -864,9 +857,9 @@ async function updateSongList(event) {
 /** 擬似的な`Song`オブジェクトを作成 */
 function createPseudoSong({ title, artist, album, trackNumber, path, updatedAt }) {
   return {
-    title: title || path.split('/').pop().split('.')[0],
-    artist,
-    album: album || 'Unknown Album',
+    title: modifyVoicedMarks(title || path.split('/').pop().split('.')[0]),
+    artist: modifyVoicedMarks(artist),
+    album: modifyVoicedMarks(album) || 'Unknown Album',
     trackNumber: trackNumber && Number(trackNumber.split('/')[0]),
     path,
     updatedAt,
@@ -889,6 +882,33 @@ function pick(object, paths) {
   }); 
 
   return obj;
+}
+
+/**
+ * （半）濁点つきの文字を修正
+ * @param {string} text 修正する文字列
+ * @param {string} 修正された文字列
+ */
+async function modifyVoicedMarks(text) {
+  if (!text) return text;
+  const map = {
+    'が': 'が', 'ぎ': 'ぎ', 'ぐ': 'ぐ', 'げ': 'げ', 'ご': 'ご',
+    'ガ': 'ガ', 'ギ': 'ギ', 'グ': 'グ', 'ゲ': 'ゲ', 'ゴ': 'ゴ',
+    'ざ': 'ざ', 'じ': 'じ', 'ず': 'ず', 'ぜ': 'ぜ', 'ぞ': 'ぞ',
+    'ザ': 'ザ', 'ジ': 'ジ', 'ズ': 'ズ', 'ゼ': 'ゼ', 'ゾ': 'ゾ',
+    'だ': 'だ', 'ぢ': 'ぢ', 'づ': 'づ', 'で': 'で', 'ど': 'ど',
+    'ダ': 'ダ', 'ヂ': 'ヂ', 'ヅ': 'ヅ', 'デ': 'デ', 'ド': 'ド',
+    'ば': 'ば', 'び': 'び', 'ぶ': 'ぶ', 'べ': 'べ', 'ぼ': 'ぼ',
+    'バ': 'バ', 'ビ': 'ビ', 'ブ': 'ブ', 'ベ': 'ベ', 'ボ': 'ボ',
+    'ぱ': 'ぱ', 'ぴ': 'ぴ', 'ぷ': 'ぷ', 'ぺ': 'ぺ', 'ぽ': 'ぽ',
+    'パ': 'パ', 'ピ': 'ピ', 'プ': 'プ', 'ペ': 'ペ', 'ポ': 'ポ',
+    'ゔ': 'ゔ', 'ヴ': 'ヴ',
+  };
+  const reg = new RegExp('(' + Object.keys(map).join('|') + ')', 'g');
+  return text
+    .replace(reg, function(match) {
+      return map[match];
+    });
 }
 
 /**
@@ -951,8 +971,9 @@ function createPlaylistElement(playlist) {
     event.stopPropagation();
     playArray = await playlist.songs();
     playingIndex = 0;
-    playingPlaylist = playlist;
+    movePlaylistToTop(playlist);
     await setPlayArray();
+    await playlist.updatePlaylistData({ latestPlayedAt: new Date() });
     snapper.close();
   });
   //* プレイリストを押した時、内容を表示
@@ -969,35 +990,54 @@ function createPlaylistElement(playlist) {
 
 /**
  * プレイリストの名称を変更するイベントを付加するメソッド
- * @param {HTMLElement} nameEl プレイリストの名前要素
+ * @param {Playlist} playlist プレイリスト
+ * @param {HTMLElement} element プレイリスト要素
  */
 function editPlaylistName(playlist, element) {
   const nameEl = element.querySelector('.playlist__name');
   dlgInputEl.value = nameEl.textContent;
   dialogEl.showModal();
-  dlgCancelEl.addEventListener('click', () => dialogEl.close(), { once: true });
-  dlgSubmitEl.addEventListener('click', async () => {
+  dlgCancelEl.onclick = () => dialogEl.close();
+  dlgSubmitEl.onclick = async () => {
     nameEl.textContent = dlgInputEl.value;
     await playlist.updatePlaylistData({ name: dlgInputEl.value });
     dialogEl.close();
     dlgInputEl.value = "";
-  }, { once: true });
+  };
 }
 
+/**
+ * プレイリストを再生した時に一番上に持っていくメソッド
+ * @param {Playlist} playlist プレイリスト
+ */
+function movePlaylistToTop(playlist) {
+  const index = playlistArray.findIndex(n => n._id === playlist._id);
+  playlistArray.splice(index, 1);
+  playlistArray.unshift(playlist);
+  playlistsEl.querySelectorAll('.playlist__item:not(#new-playlist)')[index].remove();
+  const elem = createPlaylistElement(playlist);
+  newPlaylistEl.after(elem);
+}
+
+/**
+ * プレイリストの曲リストを変更するイベントを付加するメソッド
+ * @param {Playlist} playlist プレイリスト
+ * @param {HTMLElement} element プレイリスト要素
+ */
 function addPlaylistEditEvent(playlist, element) {
   //* プレイリストの編集がキャンセルされた時
-  cancelEditEl.addEventListener('click', () => {
+  cancelEditEl.onclick = () => {
     checkedArray = [];
     radioPlayArr.checked = true;
-  }, { once: true });
+  };
 
   //* プレイリストの編集が完了した時
-  compEditEl.addEventListener('click', async () => {
+  compEditEl.onclick = async () => {
     await playlist.changeSongList(checkedArray);
     element.querySelector('.playlist__count').textContent = `${playlist.count}曲`;
     radioPlayArr.checked = true;
     checkedArray = [];
-  }, { once: true });
+  };
 }
 
 //* アプリ読み込み時に
@@ -1015,29 +1055,16 @@ window.onload = async () => {
   //* 初期音量設定
   volumeEl.value = audioEl.volume;
 
-  //TODO: テスト
-  //TODO ------------------------------------------
-  //TODO ------------------------------------------
-  // const songDB = new AsyncNedb({
-  //   filename: Path.join(__dirname, 'db/songs.db'),
-  //   autoload: true,
-  // });
-  // const songs = await songDB.asyncFind({ timeTable: { $exists: true } }, [['sort', { title: -1 }], ['limit', 100]]);
-  // playArray = songs.map(song => new Song(song));
-  // setArrayToList(playArrayEl, playArray);
-  // candidateArray = songs.map(song => new Song(song));
-  // setArrayToList(candidateEl, candidateArray);
-  //TODO ------------------------------------------
-  //TODO ------------------------------------------
-  //TODO: ここまで
-
+  //* プレイリストの取得
   const playlistDB = new AsyncNedb({
     filename: Path.join(__dirname, 'db/playlists.db'),
     autoload: true,
   });
-  const playlists = await playlistDB.asyncFind({});
+  const playlists = await playlistDB.asyncFind({}, [['sort', { latestPlayedAt: -1 }]]);
   playlistArray = playlists.map(playlist => new Playlist(playlist));
   setPlaylistsToList();
+  //* 最後に再生したプレイリストを再生リストにする
+  playArray = await playlistArray[0].songs();
 };
 
 //* デフォルトのキーイベントを設定

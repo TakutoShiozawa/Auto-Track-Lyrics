@@ -12,5 +12,10 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^11.2.1"
+  },
+  "dependencies": {
+    "nedb": "^1.8.0",
+    "nedb-async": "^0.1.6",
+    "node-id3": "^0.2.2"
   }
 }

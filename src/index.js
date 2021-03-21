@@ -1,27 +1,46 @@
 const { app, BrowserWindow } = require('electron');
+const { AsyncNedb } = require('nedb-async');
+const Path = require('path');
 
 // メインウィンドウ
 let mainWindow;
 
-function createWindow() {
-  // 画面サイズ
+async function createWindow() {
+  //* 保存されたウィンドウサイズ・位置を取得
+  const windowDB = new AsyncNedb({
+    filename: Path.join(__dirname, 'db/window.db'),
+    autoload: true,
+  });
+  const windowData = await windowDB.asyncFindOne({});
+  
+  //* 画面サイズ
   const screenWidth = 1680;
   const screenHeight = 1050;
-  // ウィンドウサイズ
+  //* ウィンドウサイズ
   const windowWidth = 500;
   const windowHeight = 600;
 
-  // メインウィンドウを作成します
-  mainWindow = new BrowserWindow({
+  //* デフォルト設定
+  const defaultWindowOption = {
     webPreferences: {
       nodeIntegration: true,
+      enableRemoteModule: true,
     },
     x: screenWidth - windowWidth,
     y: screenHeight - windowHeight,
     width: windowWidth,
     height: windowHeight,
+    minWidth: 360,
+    minHeight: 100,
+    maxWidth: 600,
+    maxHeight: screenHeight,
     alwaysOnTop: true,
-  });
+    frame: false,
+    maximizable: false,
+  };
+
+  //* メインウィンドウを作成
+  mainWindow = new BrowserWindow(Object.assign(defaultWindowOption, windowData));
 
   // メインウィンドウに表示するURLを指定します
   // （今回はmain.jsと同じディレクトリのindex.html）
@@ -31,7 +50,11 @@ function createWindow() {
   mainWindow.webContents.openDevTools();
 
   // メインウィンドウが閉じられたときの処理
-  mainWindow.on('closed', () => {
+  mainWindow.on('close', async () => {
+    //* ウィンドウの設定を保存
+    const bounds = mainWindow.getBounds();
+    await windowDB.asyncUpdate({}, bounds, { upsert: true });
+
     mainWindow = null;
   });
 }

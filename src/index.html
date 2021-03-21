@@ -3,56 +3,125 @@
   <head>
     <meta charset="utf-8">
     <title>Auto Tracking Lyrics</title>
-    <link rel="stylesheet" href="stylesheet/index.css">
+    <link rel="stylesheet" href="assets/index.css">
+    <link rel="stylesheet" href="assets/snap.css">
+    <link rel="stylesheet" href="assets/simple-line-icons/css/simple-line-icons.css">
   </head>
   <body>
     <div class="header">
-      <button
-        id="start"
-        class="display"
-      >取得</button>
-      <button
-        id="stop"
-        class="display-none"
-      >止める</button>
-      <button
-        id="auto"
-        class="display-none"
-      >AUTO</button>
-      <button
-        id="register"
-        class="display"
-      >登録</button>
-      <select
-        id="color"
-        class=""
-      ></select>
-      <div class="track-info">
-        <div class="track-info__progress">
-          <time id="position"></time>
-          <input
-            id="progress"
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-          ></input>
-          <time id="time"></time>
+      <button id="close"><i class="icon-close"></i></button>
+      <div class="progress">
+        <label class="toggle-icon">
+          <input id="shuffle" type="checkbox">
+          <i class="icon-shuffle"></i>
+        </label>
+        <time id="position">--:--</time>
+        <input id="progress" type="range" min="0" max="100" step="1" value="0" disabled>
+        <time id="duration">--:--</time>
+        <label class="toggle-icon">
+          <input id="repeat" type="checkbox">
+          <i class="icon-reload"></i>
+        </label>
+      </div>
+      <div class="player">
+        <div class="player__title">
+          <div id="title"></div>
         </div>
-        <div
-          id="title"
-          class="track-info__title"
-        ></div>
-        <div
-          id="artist"
-          class="track-info__artist"
-        ></div>
+        <div id="artist" class="player__artist"></div>
+        <div class="player__buttons">
+          <div class="player__buttonsSmalls">
+            <label class="record">
+              <input id="record" type="checkbox" disabled>
+              <span></span>
+            </label>
+            <button id="options"><i class="icon-list"></i></button>
+          </div>
+          <div class="player__buttonsLarges">
+            <button id="prev" disabled><i class="icon-control-rewind"></i></button>
+            <button id="play"><i class="icon-control-play"></i></button>
+            <button id="next" disabled><i class="icon-control-forward"></i></button>
+          </div>
+          <div class="player__buttonsSmalls">
+            <label class="volume-control">
+              <i id="volume-icon" class="icon-volume-2"></i>
+              <div class="volume-control__window">
+                <input id="volume" type="range" min="0" max="1" step="0.02">
+              </div>
+            </label>
+            <label class="color-select red">
+              Ａ
+              <select id="color"></select>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
-    <ul
-      id="lyrics"
-      class="lyrics"
-    ></ul>
+    <div id="snap" class="snap-content tabs">
+      <input id="play-array-radio" type="radio" name="tabs">
+      <!-- <input id="lyrics-radio" type="radio" name="tabs"> -->
+      <input id="lyrics-radio" type="radio" name="tabs" checked>
+      <div class="tabs__wrapper main">
+        <label id="play-array-label" for="play-array-radio">
+          <i class="icon-playlist"></i>再生リスト
+        </label>
+        <label id="lyrics-label" for="lyrics-radio">
+          <i class="icon-notebook"></i>歌詞
+        </label>
+      </div>
+      <input id="candidate-radio" type="radio" name="tabs">
+      <input id="checked-radio" type="radio" name="tabs">
+      <!-- <input id="checked-radio" type="radio" name="tabs" checked> -->
+      <div class="tabs__wrapper register">
+        <label id="candidate-label" for="candidate-radio">
+          <i class="icon-menu"></i>候補リスト
+        </label>
+        <label id="checked-label" for="checked-radio">
+          <i class="icon-check"></i>選択済み
+        </label>
+      </div>
+      <div class="tabs__option">
+        <div class="tabs__optionCnt">
+          <input id="search" placeholder="曲を検索">
+        </div>
+        <div class="tabs__optionCnt">
+          <button id="cancel-edit">キャンセル</button>
+          <button id="complete-edit">完了</button>
+        </div>
+      </div>
+      <ul id="play-array" class="tabs__content song-array"></ul>
+      <ul id="lyrics" class="tabs__content lyrics"></ul>
+      <ul id="candidate" class="tabs__content song-array">
+        <div class="pagination">
+          <button id="p-prev" disabled><i class="icon-arrow-left"></i></button>
+          <div class="pagination__number">
+            <span id="current-page">-</span>/<span id="total-page">-</span>
+          </div>
+          <button id="p-next" disabled><i class="icon-arrow-right"></i></button>
+        </div>
+      </ul>
+      <ul id="checked" class="tabs__content song-array"></ul>
+      <audio id="audio" type="audio/mpeg"></audio>
+      <button id="auto" class="display-none"><i class="icon-mouse"></i></button>
+    </div>
+    <div id="left-menu" class="snap-drawers left">
+      <!-- <input id="update-music" type="file" accept="audio/*" webkitdirectory> -->
+      <ul id="playlists" class="playlist">
+        <li id="new-playlist" class="playlist__item">
+          <div class="playlist__name">プレイリスト追加...</div>
+          <div class="playlist__count"><i class="icon-plus"></i></div>
+        </li>
+      </ul>
+      <dialog id="dialog">
+        <input id="dialog-input">
+        <button id="dialog-cancel">キャンセル</button>
+        <button id="dialog-submit">決定</button>
+      </dialog>
+    </div>
+    <div id="right-menu" class="snap-drawers right">
+      <button id="image-test">テスト</button>
+      <img id="image">
+    </div>
+    <script type="text/javascript" src="scripts/snap.js"></script>
     <script type="text/javascript" src="scripts/javascript.js"></script>
   </body>
 </html>

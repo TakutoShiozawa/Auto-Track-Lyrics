@@ -263,6 +263,10 @@ body {
   }
 }
 
+#options {
+  @include small-button();
+}
+
 //* ボリューム調整ボタン
 .volume-control {
   @include small-button();
@@ -458,12 +462,15 @@ body {
       height: calc(100vh - #{$content-padding-top} - 12px);
       padding: $content-padding-top $content-padding-x 12px;
       text-align: left;
+      outline: none;
       & li {
         position: relative;
         height: 48px;
+        width: calc(100% - 60px);
         padding-top: 4px;
         padding-left: 60px;
         border-top: solid 1px #3f3f3f;
+        background-color: black;
         & label {
           position: absolute;
           top: 0;

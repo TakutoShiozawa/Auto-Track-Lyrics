@@ -2,6 +2,7 @@ const Path = require('path');
 const NodeID3 = require('node-id3');
 const { AsyncNedb } = require('nedb-async');
 const Remote = require('electron').remote;
+const { Sortable } = require('@shopify/draggable');
 
 /** 曲クラス */
 class Song {
@@ -253,10 +254,15 @@ let isRepeat = false;
 let backCount = 0;
 /** フォントカラー */
 let fontColor = 'red';
-/** @type {Array<string>} フォントカラーオプション */
+/** フォントカラーオプション */
 const ColorEnum = ['red', 'blue', 'green', 'white'];
 /** Snap.js操作用の変数, 初期設定 */
-let snapper = new Snap({ element: snapEl });
+const snapper = new Snap({
+    element: snapEl,
+    touchToDrag: false,
+  });
+/** Draggable.jsのドラッグ可能領域 */
+const sortable = new Sortable(playArrayEl, { draggable: 'li' });
 
 /**
  * 現在再生している再生リストを返すメソッド
@@ -397,6 +403,7 @@ function getAndSetTrackInfo() {
 
 /**
  * 曲のli要素を作成するメソッド
+ * @param {HTMLElement} target 曲オブジェクト
  * @param {Song} song 曲オブジェクト
  * @return {HTMLLIElement}
  */
@@ -445,7 +452,7 @@ function createSongElement(target, song) {
     artwork.append(playingAnimation);
 
     //* ダブルクリックでその曲を再生するイベントハンドラを設定
-    li.addEventListener('dblclick', () => dblclickToPlay(li, song.index));
+    li.addEventListener('dblclick', () => dblclickToPlay(li, song));
   } else if (target === checkedEl) {
     //* クリックすると選択済から削除するイベントを追加
     li.id = 'song-id-' + song._id;
@@ -465,13 +472,13 @@ function createSongElement(target, song) {
 /**
  * ダブルクリックでその曲を再生するためのメソッド
  * @param {HTMLElement} elem 対象の要素
- * @param {number} index 再生リスト内の曲のインデックス
+ * @param {Song} song 再生リスト内の曲
  */
-function dblclickToPlay(elem, index) {
+function dblclickToPlay(elem, song) {
   //* 再生中の場合発火しない
   if (elem.classList.contains('playing')) return;
 
-  playingIndex = index;
+  playingIndex = song.index;
   backCount = 0;
   getAndSetTrackInfo();
 }
@@ -574,16 +581,6 @@ async function searchSongs(db, text, page) {
   //* データベース内をクエリに従って検索・表示
   const songs = await db.asyncFind(query, option);
 
-  //* 検索された曲を含むプレイリストを検索
-  //* プレイリストデータベースを取得
-  // const playlistDB = new AsyncNedb({
-  //   filename: Path.join(__dirname, 'db/playlists.db'),
-  //   autoload: true,
-  // });
-
-  //* 曲IDを含むプレイリストを取得
-  // const playlists = await playlistDB.asyncFind({ songs: { $elemMatch: { _id: { $in: songIds } } } });
-  // console.log(playlists);
   return songs.map(n => new Song(n));
 }
 
@@ -802,7 +799,10 @@ function trackLyrics() {
 function scrollToLyrics() {
   /** `.passed`クラス要素の配列 */
   const passedClassEls = document.getElementsByClassName('passed');
-  if (passedClassEls.length === 0) return;
+  if (passedClassEls.length === 0) {
+    lyricsEl.scroll({ top: 0, behavior: 'smooth' });
+    return;
+  }
   /** 対象の要素 */
   const target = passedClassEls[passedClassEls.length - 1];
   /** 画面上部から要素までの距離 */
@@ -811,10 +811,7 @@ function scrollToLyrics() {
   const CORRECTION = 12;
   /** スクロール高さ */
   const top = clientTop + lyricsEl.scrollTop - ((window.innerHeight + HEADER_HEIGHT + TABS_HEIGHT) / 2) + CORRECTION;
-  lyricsEl.scroll({
-    top,
-    behavior: 'smooth',
-  });
+  lyricsEl.scroll({ top, behavior: 'smooth' });
 }
 
 /**
@@ -1266,6 +1263,14 @@ imageTestEl.addEventListener('click', () => {
   playingSong().displayArtwork(imageEl);
 });
 
+//* フォーム入力時はキーイベントの発火を取り消し
+searchEl.addEventListener('focus', () => {
+  window.removeEventListener('keydown', defaultKeyEvent);
+  searchEl.addEventListener('blur', () => {
+    window.addEventListener('keydown', defaultKeyEvent);
+  }, { once: true });
+});
+
 //* 曲の検索機能
 searchEl.addEventListener('change', async (event) => {
   const songDB = new AsyncNedb({
@@ -1293,4 +1298,19 @@ newPlaylistEl.addEventListener('click', async () => {
   const item = createPlaylistElement(playlist);
   playlistsEl.append(item);
   editPlaylistName(playlist, item);
+});
+
+//* 並び替えドラッグ
+sortable.on('sortable:sorted', (event) => {
+  const { oldIndex, newIndex } = event;
+  //* 現在再生中の時、新しいIndexを現在地にする
+  if (oldIndex === playingIndex) playingIndex = newIndex;
+  //* 曲の配列を入れ替える
+  const moved = playingArray().splice(oldIndex, 1);
+  playingArray().splice(newIndex, 0, ...moved);
+});
+
+const optionsEl = document.getElementById('options');
+optionsEl.addEventListener('click', () => {
+  snapper.open('left');
 });

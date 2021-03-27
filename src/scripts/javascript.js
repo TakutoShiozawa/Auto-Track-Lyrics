@@ -20,7 +20,12 @@ class Song {
     /** @type {string} */
     this._path = path;
     /** @type {string[]} */
-    this._timeTable = timeTable;
+    this._timeTable = timeTable && timeTable.filter(n => n !== '');
+    //* 以下、再生時に整形
+    /** @type {number[]} */
+    this._timeArray = [];
+    /** @type {string[]} */
+    this._lyricsArray = [];
   }
 
   //* Getter関数
@@ -29,10 +34,8 @@ class Song {
   get album() { return this._album; }
   get trackNumber() { return this._trackNumber; }
   get path() { return this._path; }
-  get timeTable() { return this._timeTable; }
-  get lyrics() {
-    return this.getLyrics();
-  }
+  get timeTable() { return this._timeArray; }
+  get lyrics() { return this._lyricsArray; }
   get index() {
     return playingArray().findIndex(song => song._id === this._id);
   }
@@ -54,10 +57,10 @@ class Song {
     };
     //* Web WorkerでBufferをバイナリに変換
     worker.postMessage(id3tag.image.imageBuffer);
-}
+  }
 
   /** 曲のID3タグの歌詞を取得するメソッド */
-  getLyrics() {
+  getLyricsfromID3() {
     const id3Tag = NodeID3.read(this.path);
     const lyricsText = id3Tag.unsynchronisedLyrics && id3Tag.unsynchronisedLyrics.text;
     return lyricsText ? lyricsText.split(/\r\n|\n|\r/) : [];
@@ -67,7 +70,7 @@ class Song {
   /** `Song`クラスのSetter関数 */
   async updateSongData(payload) {
     //* アップデートを許可するキー
-    const allowedKeys = ['title', 'artist', 'album', 'trackNumber', 'path', 'timeTable'];
+    const allowedKeys = ['title', 'artist', 'album', 'trackNumber', 'path'];
     Object.keys(payload).forEach(key => {
       //* キーが許可されてない時、削除
       if (allowedKeys.indexOf(key) === -1) {
@@ -83,6 +86,34 @@ class Song {
       autoload: true,
     });
     await db.asyncUpdate({ _id: this._id }, { $set: payload });
+  }
+
+  /** タイムテーブルを更新する関数 */
+  async updateTimeTable(timeArray) {
+    const timeTable = timeArray.map((time, i) => `[${time}] ${this._lyricsArray[i]}`);
+    //* 曲情報データベースを取得
+    const db = new AsyncNedb({
+      filename: Path.join(__dirname, 'db/songs.db'),
+      autoload: true,
+    });
+    await db.asyncUpdate({ _id: this._id }, { $set: { timeTable } });
+    this._timeArray = timeArray;
+    this._timeTable = timeTable;
+  }
+
+  /** 再生時に歌詞・タイムテーブルを取得 */
+  setLyrics() {
+    if (!this._lyricsArray.length) {
+      if (this._timeTable) {
+        /** タイムテーブルから時間を取得する正規表現 */
+        const timeRegex = /\[?([0-9\.]+)\] /;
+        this._timeArray = this._timeTable.map(text => Number(timeRegex.exec(text)[1]));
+        this._lyricsArray = this._timeTable.map(text => text.split('] ')[1]);
+      } else {
+        //* ID3タグから歌詞を取得
+        this._lyricsArray = this.getLyricsfromID3();
+      }
+    }
   }
 }
 
@@ -224,8 +255,6 @@ const dlgSubmitEl   = document.getElementById('dialog-submit');
 
 /** 曲の長さ */
 let duration = 300;
-/** @type {Array<string>} 歌詞の配列 */
-let lyricsArray = [];
 /** 再生時間 */
 let currentTime = 0;
 /** @type {Array<Song>} 再生リスト */
@@ -240,8 +269,6 @@ let playlistArray = [];
 let playingIndex = 0;
 /** 再生状態 */
 let playerState = 'stop';
-/** @type {Array<number>} タイムテーブルの時間表（配列） */
-let timeArray = [];
 /** @type {Array<number>} 登録中の時間表 */
 let recordedArray = [];
 /** オートスクロールさせる？ */
@@ -364,30 +391,15 @@ function getAndSetTrackInfo() {
   nextEl.disabled = true;
 
   const song = playingSong();
+  song.setLyrics();
   audioEl.src = song.path;
-
   titleEl.textContent = song.title;
   artistEl.textContent = song.artist;
-  
-  if (song.timeTable) {
-    /** タイムテーブルから時間を取得する正規表現 */
-    const timeRegex = /\[?([0-9\.]+)\] /;
-    /** 時間と歌詞を切り分けたオブジェクト */
-    const splitted = song.timeTable.filter(n => n !== '').map(text => {
-      const time = Number(timeRegex.exec(text)[1]);
-      const lyrics = text.split('] ')[1];
-      return { time, lyrics };
-    });
-    timeArray = splitted.map(n => n.time);
-    lyricsArray = splitted.map(n => n.lyrics);
-  } else {
-    timeArray = [];
-    //* ID3タグから歌詞を取得
-    lyricsArray = song.lyrics;
-  }
+
   //* 歌詞を表示
+  const lyrics = song.lyrics;
   let lyricsHtml = '';
-  lyricsArray.forEach((lyr) => {
+  lyrics.forEach((lyr) => {
     lyricsHtml += `<li>${lyr}</li>`;
   });
   lyricsEl.innerHTML = lyricsHtml;
@@ -396,14 +408,14 @@ function getAndSetTrackInfo() {
   //* 自動スクロールの開始
   isAuto = true;
   autoEl.className = 'display-none';
-  recordEl.disabled = lyricsArray.length === 0;
+  recordEl.disabled = lyrics.length === 0;
 
   movePlayingClass();
 }
 
 /**
  * 曲のli要素を作成するメソッド
- * @param {HTMLElement} target 曲オブジェクト
+ * @param {HTMLElement} target 要素を追加するList要素
  * @param {Song} song 曲オブジェクト
  * @return {HTMLLIElement}
  */
@@ -418,55 +430,77 @@ function createSongElement(target, song) {
   title.textContent = song.title;
   artist.textContent = song.artist;
 
-  if (target === candidateEl) {
-    //* リストにチェックをつける機構を追加
-    const checkbox = document.createElement('input');
-    const label = document.createElement('label');
-    checkbox.type = 'checkbox';
-    checkbox.id = 'checkbox-' + song._id;
-    label.htmlFor = 'checkbox-' + song._id;
-    //* 初期チェック
-    checkbox.checked = checkedArray.some(n => n._id === song._id);
-
-    //* チェックボックスにイベントハンドラを設定
-    checkbox.addEventListener('change', (event) => {
-      if (event.target.checked) {
-        checkedArray.push(song);
-        const li = createSongElement(checkedEl, song);
-        song.displayArtwork(li.querySelector('img'));
-        checkedEl.prepend(li);
-      } else {
+  //* 追加させる要素によって構造を変更
+  switch (target) {
+    case candidateEl:
+      //* リストにチェックをつける機構を追加
+      const els = createCheckableElement(song);
+      li.append(...els);
+      break;
+    case playArrayEl:
+      //* 再生中を示すアニメーションを追加
+      const animeEl = createPlayAnimationElement();
+      artwork.append(animeEl);
+      //* ダブルクリックでその曲を再生するイベントハンドラを設定
+      li.addEventListener('dblclick', () => dblclickToPlay(li, song));
+      break;
+    case checkedEl:
+      //* クリックすると選択済から削除するイベントを追加
+      li.id = 'song-id-' + song._id;
+      li.addEventListener('click', () => {
+        li.remove();
+        const tSong = candidateEl.querySelector(`#checkbox-${song._id}`);
+        if (tSong) tSong.checked = false;
         checkedArray = checkedArray.filter(n => n._id !== song._id);
-        document.getElementById(`song-id-${song._id}`).remove();
-      }
-    });
-    li.append(checkbox, label);
-  } else if (target === playArrayEl) {
-    //* 再生中を示すアニメーションを追加
-    const playingAnimation = document.createElement('div');
-    const line1 = document.createElement('div');
-    const line2 = document.createElement('div');
-    const line3 = document.createElement('div');
-    playingAnimation.className = 'playing-animation';
-    playingAnimation.append(line1, line2, line3);
-    artwork.append(playingAnimation);
-
-    //* ダブルクリックでその曲を再生するイベントハンドラを設定
-    li.addEventListener('dblclick', () => dblclickToPlay(li, song));
-  } else if (target === checkedEl) {
-    //* クリックすると選択済から削除するイベントを追加
-    li.id = 'song-id-' + song._id;
-    li.addEventListener('click', () => {
-      li.remove();
-      const tSong = candidateEl.querySelector(`#checkbox-${song._id}`);
-      if (tSong) tSong.checked = false;
-      checkedArray = checkedArray.filter(n => n._id !== song._id);
-    });
+      });
+      break;
+    default:
+      break;
   }
 
   artwork.prepend(img);
   li.append(artwork, title, artist);
   return li;
+}
+
+/**
+ * 検索結果の曲表示要素の作成
+ * @param {Song} song 曲オブジェクト
+ */
+function createCheckableElement(song) {
+  //* リストにチェックをつける機構を追加
+  const checkbox = document.createElement('input');
+  const label = document.createElement('label');
+  checkbox.type = 'checkbox';
+  checkbox.id = 'checkbox-' + song._id;
+  label.htmlFor = 'checkbox-' + song._id;
+  //* 初期チェック
+  checkbox.checked = checkedArray.some(n => n._id === song._id);
+
+  //* チェックボックスにイベントハンドラを設定
+  checkbox.addEventListener('change', (event) => {
+    if (event.target.checked) {
+      checkedArray.push(song);
+      const li = createSongElement(checkedEl, song);
+      song.displayArtwork(li.querySelector('img'));
+      checkedEl.prepend(li);
+    } else {
+      checkedArray = checkedArray.filter(n => n._id !== song._id);
+      document.getElementById(`song-id-${song._id}`).remove();
+    }
+  });
+  return [checkbox, label];
+}
+
+/** 再生中アニメーションを表示するための要素を作成 */
+function createPlayAnimationElement() {
+  const animeEl = document.createElement('div');
+  const line1 = document.createElement('div');
+  const line2 = document.createElement('div');
+  const line3 = document.createElement('div');
+  animeEl.className = 'playing-animation';
+  animeEl.append(line1, line2, line3);
+  return animeEl
 }
 
 /**
@@ -486,9 +520,6 @@ function dblclickToPlay(elem, song) {
 /** 再生リストを生成するメソッド */
 async function setPlayArray() {
   playingIndex = 0;
-  //* 適当に曲を取ってきて再生リストに格納・再生
-  //TODO: 再生リストの取得方法を決定する
-  // playArray = await playlistArray[0].songs();
   //* シャッフルしたリストを同時に作成
   shufflePlayArray(true);
   //* 再生リストを表示させる
@@ -700,6 +731,7 @@ async function defaultKeyEvent(event) {
  * @param {KeyboardEvent} event 
  */
 async function recordingKeyEvent(event) {
+  const song = playingSong();
   switch (event.code) {
     //* Enterボタン押下でタイムテーブルに追加
     case 'Enter':
@@ -718,9 +750,9 @@ async function recordingKeyEvent(event) {
     case 'ArrowDown':
     case 'ArrowRight':
       event.preventDefault()
-      if (timeArray.length) {
+      if (song.timeTable.length) {
         const i = recordedArray.length;
-        recordedArray.push(timeArray[i]);
+        recordedArray.push(song.timeTable[i]);
       }
       break;
 
@@ -734,15 +766,13 @@ async function recordingKeyEvent(event) {
   }
 
   //* 登録が終わったら確認して保存
-  if (recordedArray.length === lyricsArray.length) {
+  if (recordedArray.length === song.lyrics.length) {
     const res = confirm('タイムテーブルを登録しますか？');
     if (res) {
       //* タイムテーブルを保存
-      await restoreTimeTable();
+      await song.updateTimeTable(recordedArray);
       //* 保存したら最初から再生
       audioEl.currentTime = 0;
-      //* 登録したものをそのまま用いる
-      timeArray = [...recordedArray];
       lyricsEl.scroll({ top: 0 });
     }
 
@@ -750,17 +780,6 @@ async function recordingKeyEvent(event) {
     quitRecord();
     recordEl.checked = false;
   }
-}
-
-/** タイムテーブルを作成するメソッド */
-async function restoreTimeTable() {
-  const timeTable = [];
-  for (let i = 0; i < recordedArray.length; i++) {
-    const content = `[${recordedArray[i]}] ${lyricsArray[i]}`;
-    timeTable.push(content);
-  }
-
-  await playingSong().updateSongData({ timeTable });
 }
 
 /** タイムテーブル作成を中止するメソッド */
@@ -778,7 +797,7 @@ function trackLyrics() {
   /** `#lyrics`要素の子要素 */
   const liElements = lyricsEl.children;
   const len = liElements.length;
-  const times = recordEl.checked ? recordedArray : timeArray;
+  const times = recordEl.checked ? recordedArray : playingSong().timeTable;
   for (let i = 0; i < len; i++) {
     if (times.length || recordEl.checked) {
       //* タイムテーブルを参照し、再生時間よりも小さいものを強調表示
@@ -1310,7 +1329,7 @@ sortable.on('sortable:sorted', (event) => {
   playingArray().splice(newIndex, 0, ...moved);
 });
 
-const optionsEl = document.getElementById('options');
-optionsEl.addEventListener('click', () => {
+const openListEl = document.getElementById('open-list');
+openListEl.addEventListener('click', () => {
   snapper.open('left');
 });

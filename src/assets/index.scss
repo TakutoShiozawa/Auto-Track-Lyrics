@@ -59,6 +59,19 @@ $z-index: (
   }
 }
 
+@mixin fixed-button {
+  @include large-button();
+  position: fixed;
+  bottom: 10px;
+  background-color: #2c2c2c;
+  z-index: map-get($z-index, autoButton);
+  opacity: 0.4;
+  @include hover-fade();
+  &:hover {
+    opacity: 1;
+  }
+}
+
 @mixin hover-fade() {
   transition: .5s;
   transition-delay: .5s;
@@ -456,6 +469,12 @@ body {
           }
         }
       }
+      //* 歌詞ジャンプ時のスタイル
+      &.jumping li:hover {
+        background-color: #2c2c2c;
+        text-decoration: underline;
+        cursor: pointer;
+      }
     }
     //* 再生リスト
     &.song-array {
@@ -616,19 +635,16 @@ body {
   }
 }
 
+//* ジャンプボタン
+#jump {
+  @include fixed-button();
+  left: 10px;
+}
+
 //* AUTOボタン
 #auto {
-  @include large-button();
-  position: fixed;
-  bottom: 10px;
+  @include fixed-button();
   right: 10px;
-  background-color: #2c2c2c;
-  z-index: map-get($z-index, autoButton);
-  opacity: 0.4;
-  @include hover-fade();
-  &:hover {
-    opacity: 1;
-  }
 }
 
 .playlist {

@@ -209,6 +209,7 @@ const cancelEditEl  = document.getElementById('cancel-edit');
 const compEditEl    = document.getElementById('complete-edit');
 const prevPageEl    = document.getElementById('p-prev');
 const nextPageEl    = document.getElementById('p-next');
+const jumpEl        = document.getElementById('jump');
 const autoEl        = document.getElementById('auto');
 //* Input要素
 const shuffleEl     = document.getElementById('shuffle');
@@ -271,6 +272,8 @@ let playingIndex = 0;
 let playerState = 'stop';
 /** @type {Array<number>} 登録中の時間表 */
 let recordedArray = [];
+/** 歌詞ジャンプ機能をON? */
+let isJumping = false;
 /** オートスクロールさせる？ */
 let isAuto = true;
 /** シャッフルON? */
@@ -397,20 +400,44 @@ function getAndSetTrackInfo() {
   artistEl.textContent = song.artist;
 
   //* 歌詞を表示
-  const lyrics = song.lyrics;
-  let lyricsHtml = '';
-  lyrics.forEach((lyr) => {
-    lyricsHtml += `<li>${lyr}</li>`;
-  });
-  lyricsEl.innerHTML = lyricsHtml;
+  createLyricsElement(song);
   lyricsEl.scroll({ top: 0 });
 
   //* 自動スクロールの開始
   isAuto = true;
-  autoEl.className = 'display-none';
+  toggleButtonDisplay(autoEl, false);
+  toggleButtonDisplay(jumpEl, song.timeTable.length !== 0);
   recordEl.disabled = lyrics.length === 0;
 
   movePlayingClass();
+}
+
+/**
+ * 歌詞を表示させるメソッド
+ * @param {Song} song 
+ */
+function createLyricsElement(song) {
+  const lyrics = song.lyrics;
+  const timeTable = song.timeTable;
+  const elements = lyrics.map((text, i) => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    if (timeTable && timeTable.length) {
+      li.addEventListener('click', () => {
+        if (isJumping) {
+          audioEl.currentTime = timeTable[i];
+          lyricsEl.classList.remove('jumping');
+          jumpEl.querySelector('i').className = 'icon-target';
+          isJumping = !isJumping;
+        }
+      });
+    }
+    return li;
+  });
+  while (lyricsEl.firstChild) {
+    lyricsEl.removeChild(lyricsEl.firstChild);
+  }
+  lyricsEl.prepend(...elements);
 }
 
 /**
@@ -1056,6 +1083,17 @@ function addPlaylistEditEvent(playlist, element) {
   };
 }
 
+/**
+ * ボタンの表示・非表示の切り替え
+ * @param {HTMLButtonElement} button ボタン要素
+ * @param {Boolean} isDisplayed 表示するか否か
+ */
+function toggleButtonDisplay(button, isDisplayed) {
+  isDisplayed
+    ? button.classList.replace('display-none', 'display')
+    : button.classList.replace('display', 'display-none');
+}
+
 //* アプリ読み込み時に
 window.onload = async () => {
   //* フォントカラーの選択オプションを追加
@@ -1116,11 +1154,24 @@ window.addEventListener('resize', () => snapper.close());
 //* 閉じるボタン
 closeEl.onclick = () => Remote.getCurrentWindow().close();
 
+//* ジャンプボタンを押した時
+jumpEl.addEventListener('click', () =>{
+  jumpEl.blur();
+  isJumping = !isJumping;
+  if (isJumping) {
+    lyricsEl.classList.add('jumping');
+    jumpEl.querySelector('i').className = 'icon-close';
+  } else {
+    lyricsEl.classList.remove('jumping');
+    jumpEl.querySelector('i').className = 'icon-target';
+  }
+});
+
 //* AUTOボタンクリック時、自動スクロールの開始
 autoEl.addEventListener('click', () => {
   autoEl.blur();
   isAuto = true;
-  autoEl.className = 'display-none';
+  toggleButtonDisplay(autoEl, false);
 });
 
 //* 「(再)登録」「登録中止」ボタンクリック時
@@ -1201,7 +1252,7 @@ volumeEl.addEventListener('change', () => volumeEl.blur());
 //* 歌詞をスクロールした時、自動スクロールを停止
 lyricsEl.addEventListener('wheel', () => {
   isAuto = false;
-  autoEl.className = 'display';
+  toggleButtonDisplay(autoEl, true);
 });
 
 //* シャッフルボタン

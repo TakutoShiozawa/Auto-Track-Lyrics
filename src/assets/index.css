@@ -589,6 +589,12 @@ body {
   content: "次→ ";
 }
 
+.tabs__content.lyrics.jumping li:hover {
+  background-color: #2c2c2c;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .tabs__content.song-array {
   height: calc(100vh - calc(100px + 38px) - 12px);
   padding: calc(100px + 38px) 20px 12px;
@@ -816,6 +822,53 @@ body {
   margin: 0 12px;
 }
 
+#jump {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: none;
+  font-size: 2rem;
+  border-radius: 50%;
+  position: fixed;
+  bottom: 10px;
+  background-color: #2c2c2c;
+  z-index: 2;
+  opacity: 0.4;
+  -webkit-transition: .5s;
+  transition: .5s;
+  -webkit-transition-delay: .5s;
+          transition-delay: .5s;
+  left: 10px;
+}
+
+#jump i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate3d(-50%, -50%, 0);
+          transform: translate3d(-50%, -50%, 0);
+  color: white;
+}
+
+#jump:disabled i {
+  color: #888;
+}
+
+#jump:disabled:hover {
+  background-color: transparent;
+}
+
+#jump:hover {
+  -webkit-transition: 0s;
+  transition: 0s;
+  -webkit-transition-delay: 0s;
+          transition-delay: 0s;
+}
+
+#jump:hover {
+  opacity: 1;
+}
+
 #auto {
   position: relative;
   width: 60px;
@@ -825,7 +878,6 @@ body {
   border-radius: 50%;
   position: fixed;
   bottom: 10px;
-  right: 10px;
   background-color: #2c2c2c;
   z-index: 2;
   opacity: 0.4;
@@ -833,6 +885,7 @@ body {
   transition: .5s;
   -webkit-transition-delay: .5s;
           transition-delay: .5s;
+  right: 10px;
 }
 
 #auto i {
